@@ -17,6 +17,8 @@ familiar with Lean probability theory, and didn't realize Pmf existed: I thought
 use general measures, and this would require a lot measurability and integrability side
 conditions.  However, I think Pmf still would have integrability side conditions when
 expectations are involved, so I'm going to stick with my finitely supported version for now.
+
+Prob/Pmf.lean shows that Prob injects into Pmf, which is evidence these definitions are correct.
 -/
 
 open Classical

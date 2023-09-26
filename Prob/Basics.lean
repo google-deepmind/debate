@@ -42,7 +42,7 @@ lemma seqRight_eq (x : Prob α) (y : Prob β) : x *> y = x >>= (λ _ ↦ y) := r
 /-- (f >>= g).prob as an exp -/
 lemma prob_bind (f : Prob α) (g : α → Prob β) (y : β) : (f >>= g).prob y = f.exp (λ x ↦ (g x).prob y) := by
   simp only [Prob.prob, prob_bind', Prob.exp, Finsupp.sum_apply]
-  apply Finsupp.sum_congr; intro x _; simp only [Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul]
+  apply Finsupp.sum_congr; intro x _; rw [Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul]
 
 /-- bind.exp is iterated exp -/
 lemma exp_bind (f : Prob α) (g : α → Prob β) (h : β → ℝ) : (f >>= g).exp h = f.exp (λ x ↦ (g x).exp h) := by
