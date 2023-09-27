@@ -123,6 +123,16 @@ lemma exp_congr {f : Prob α} {g h : α → ℝ} (e : ∀ x, f.prob x ≠ 0 → 
   simp only [exp]; apply Finsupp.sum_congr; intro x m
   simp only [Finsupp.mem_support_iff] at m; simp only [e _ m]
 
+/-- General congruence for exp, allowing the probabilities to be different -/
+lemma exp_congr' {f g : Prob α} {u v : α → ℝ} (h : ∀ x, f.prob x * u x = g.prob x * v x) :
+    f.exp u = g.exp v := by
+  simp only [exp, Finsupp.sum]
+  rw [Finset.sum_subset (Finset.subset_union_left f.prob.support g.prob.support),
+    Finset.sum_subset (Finset.subset_union_right f.prob.support g.prob.support)]
+  · exact Finset.sum_congr rfl (λ _ _ ↦ h _)
+  · intro x _ m; simp only [Finsupp.mem_support_iff, not_not] at m; simp only [m, zero_mul]
+  · intro x _ m; simp only [Finsupp.mem_support_iff, not_not] at m; simp only [m, zero_mul]
+
 /-- Congruence for pr -/
 lemma pr_congr {f : Prob α} {p q : α → Prop} (e : ∀ x, f.prob x ≠ 0 → (p x ↔ q x)) : f.pr p = f.pr q := by
   simp only [pr]; apply exp_congr; intro x m; simp only [eq_iff_iff.mpr (e x m)]

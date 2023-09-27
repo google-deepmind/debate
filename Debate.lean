@@ -1,3 +1,4 @@
+import Debate.Oracle
 import Debate.Protocol
 import Debate.Correct
 import Prob.Defs

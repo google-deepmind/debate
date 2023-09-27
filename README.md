@@ -13,40 +13,46 @@ theoretical model is limited in several ways: the agents are assumed to have
 unbounded computational power, which is not a realistic assumption for ML
 agents, and the results consider only deterministic arguments.
 
-Anonymous et al. (TODO: link) improves the complexity theoretical model of
+Anonymous et al. improves the complexity theoretical model of
 debate to be "doubly-efficient": both the provers and the verifier have limited
 computational power.  It also treats stochastic arguments: the provers try to
 convince the judge of the result of a randomized computation involving calls to
-a random oracle.  Concretely, the main theorem is
+a random oracle.  Concretely, the main formalized result is
 
-**Theorem 7.2 (doubly-efficient stochastic oracle debate).** For an integer $d >
-0$, let $\mathcal{O}$ be a $d$-discrete stochastic oracle (an random function
-mapping length $l$ bit strings to bits, where probabilities are integer
-multiples of $1/d$. Let $L$ be any language decidable by a probabilistic oracle
-Turing machine $M^\mathcal{O}$ in time $T = T(n)$ and space $S = S(n)$.  Then
-there is a $O(d^2 T \log T)$ prover time, $O(d^2 + l)$ verifier time debate
-protocol with cross-examination deciding $L$ with completeness $3/5$ and
+**Definition 6.1 (Lipshitz oracle machines).** An oracle Turing machine
+$M^\mathcal{O}$ is $K$-Lipshitz if, for any other oracle $\mathcal{O}'$ s.t.
+$|\Pr(\mathcal{O}(z)) - \Pr(\mathcal{O}'(z))| \le \epsilon$, we have
+$|\Pr(M^\mathcal{O}(x)) - \Pr(M^\mathcal{O'}(x))| \le K \epsilon$.
+
+**Theorem 6.2 (doubly-efficient stochastic oracle debate).** Let $L$ be a
+language decidable by a $K$-Lipshitz probabilistic oracle Turing machine
+$M^\mathcal{O}$ in time $T = T(n)$, measuring oracle queries only as costing
+time.  Then there is an $O(K^2 T \log T)$ prover time, $O(K^2)$ verifier time
+debate protocol with cross-examination deciding $L$ with completeness $3/5$ and
 soundness $3/5$.
 
-This repo formalizees this result in Lean 4 (mostly: we do not formalize the
-space constraint, formalize the time constraint only implicitly by defining
-time-limited honest provers and verifiers, and a have weaker completeness and
-soundness constant $8/15$.  The key files are:
+The formalized result differs from the paper result slightly in that we focus
+only on correctness: we do not yet formalize space complexity, count only oracle
+queries for time complexity, and represent those queries only via the code for
+the protocol.  We also define Lipshitz oracle machines differently: the paper
+fixes $M$ and lets both $\mathcal{O}$ and $\mathcal{O}'$ vary, while we fix both
+$M$ and $\mathcal{O}$ and let only $\mathcal{O}'$ vary (this slightly
+strengthens the resulting theorem).
 
 1. `Prob/Defs.lean`: Finitely supported probability distributions, representing stochastic computations.
-2. `Debate/Protocol.lean`: The debate protocol, honest players, and the definition of correctness.
-3. `Debate/Correct.lean`: The final correctness theorems.
-4. `Debate/Details.lean`: Proof details.
+2. `Debate/Oracle.lean`: Our computation model, including the definition of Lipshitz oracles.
+3. `Debate/Protocol.lean`: The debate protocol, honest players, and the definition of correctness.
+4. `Debate/Correct.lean`: The final correctness theorems.
+5. `Debate/Details.lean`: Proof details.
 
-## Installation (TODO)
+## Installation
 
-Write instructions for how the user should install your code. The instructions
-should ideally be valid when copy-pasted. You can combine this with the Usage
-section if there's no separate installation step.
+1. Install Lean 4 and Lake via elan: https://github.com/leanprover/elan
+2. Run `lake build` within the directory.
 
-## Citing this work (TODO)
+## Citing this work
 
-Add citation details here, usually a pastable BibTeX snippet.
+We will add this after the paper is reviewed.
 
 ## License and disclaimer
 
