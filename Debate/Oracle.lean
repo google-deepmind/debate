@@ -37,8 +37,8 @@ def Oracle.final (o : Oracle) (t : ℕ) : Prob Bool := do
 instance : Dist Oracle where
   dist o0 o1 := ⨆ n, ⨆ y : Vector Bool n, |(o0 _ y).prob true - (o1 _ y).prob true|
 
-/-- An oracle computation is k-Lipshitz if the final probability differs by ≤ k * oracle dist.
+/-- An oracle computation is k-Lipschitz if the final probability differs by ≤ k * oracle dist.
     We define this asymmetrically, as we want the neighborhood of a particular oracle. -/
-structure Oracle.lipshitz (o : Oracle) (t : ℕ) (k : ℝ) : Prop where
+structure Oracle.lipschitz (o : Oracle) (t : ℕ) (k : ℝ) : Prop where
   k0 : 0 ≤ k
   le : ∀ o' : Oracle, |(o.final t).prob true - (o'.final t).prob true| ≤ k * dist o o'

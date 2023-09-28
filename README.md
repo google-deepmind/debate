@@ -19,13 +19,13 @@ computational power.  It also treats stochastic arguments: the provers try to
 convince the judge of the result of a randomized computation involving calls to
 a random oracle.  Concretely, the main formalized result is
 
-**Definition 6.1 (Lipshitz oracle machines).** An oracle Turing machine
-$M^\mathcal{O}$ is $K$-Lipshitz if, for any other oracle $\mathcal{O}'$ s.t.
+**Definition 6.1 (Lipschitz oracle machines).** An oracle Turing machine
+$M^\mathcal{O}$ is $K$-Lipschitz if, for any other oracle $\mathcal{O}'$ s.t.
 $|\Pr(\mathcal{O}(z)) - \Pr(\mathcal{O}'(z))| \le \epsilon$, we have
 $|\Pr(M^\mathcal{O}(x)) - \Pr(M^\mathcal{O'}(x))| \le K \epsilon$.
 
 **Theorem 6.2 (doubly-efficient stochastic oracle debate).** Let $L$ be a
-language decidable by a $K$-Lipshitz probabilistic oracle Turing machine
+language decidable by a $K$-Lipschitz probabilistic oracle Turing machine
 $M^\mathcal{O}$ in time $T = T(n)$, measuring oracle queries only as costing
 time.  Then there is an $O(K^2 T \log T)$ prover time, $O(K^2)$ verifier time
 debate protocol with cross-examination deciding $L$ with completeness $3/5$ and
@@ -34,13 +34,13 @@ soundness $3/5$.
 The formalized result differs from the paper result slightly in that we focus
 only on correctness: we do not yet formalize space complexity, count only oracle
 queries for time complexity, and represent those queries only via the code for
-the protocol.  We also define Lipshitz oracle machines differently: the paper
+the protocol.  We also define Lipschitz oracle machines differently: the paper
 fixes $M$ and lets both $\mathcal{O}$ and $\mathcal{O}'$ vary, while we fix both
 $M$ and $\mathcal{O}$ and let only $\mathcal{O}'$ vary (this slightly
 strengthens the resulting theorem).
 
 1. `Prob/Defs.lean`: Finitely supported probability distributions, representing stochastic computations.
-2. `Debate/Oracle.lean`: Our computation model, including the definition of Lipshitz oracles.
+2. `Debate/Oracle.lean`: Our computation model, including the definition of Lipschitz oracles.
 3. `Debate/Protocol.lean`: The debate protocol, honest players, and the definition of correctness.
 4. `Debate/Correct.lean`: The final correctness theorems.
 5. `Debate/Details.lean`: Proof details.

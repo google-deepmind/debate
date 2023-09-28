@@ -248,7 +248,7 @@ lemma snaps_eq_snap_final (alice : Alice) (t : ℕ) : final <$> snaps o alice e 
 # Completeness
 
 We assume that
-1. The oracle is k-Lipshitz
+1. The oracle is k-Lipschitz
 2. Alice is honest
 3. Bob is secretly Eve, and might be evil
 
@@ -276,7 +276,7 @@ lemma alices_close (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) :
 
 /-- Alice produces (p,y) with p close and y true with good probability, since if we condition on
     Alice being close she does as least as well as a close oracle. -/
-lemma alices_success (o : Oracle) (L : o.lipshitz t k) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) :
+lemma alices_success (o : Oracle) (L : o.lipschitz t k) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) :
     (o.final t).prob true - k * e - ((1:ℝ) - (1 - q)^(t+1)) ≤
       (alices o (alice e q) (t+1)).pr (fun (p,y) => close p (o.probs y) e ∧ y.head) := by
   trans (snaps o (alice e q) e (t+1)).pr (fun (_,y) => y.head) - (1 - (1 - q)^(t+1))
@@ -355,7 +355,7 @@ lemma evil_bobs_lies (o : Oracle) (eve : Bob) (cs : c < s) (v0 : 0 < v)
   | none => simp only at ri
 
 /-- Alice wins the debate with good probability -/
-theorem completeness' (o : Oracle) (L : o.lipshitz t k) (eve : Bob)
+theorem completeness' (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
     (c0 : 0 < c) (cs : c < s) (q0 : 0 < q) (q1 : q ≤ 1) (v0 : 0 < v) (v1 : v ≤ 1) :
     (1 - v) * ((o.final t).prob true - k * c - (1 - (1 - q) ^ (t + 1))) ≤
       (debate o (alice c q) eve (vera c s v) t).prob true := by
@@ -372,12 +372,12 @@ theorem completeness' (o : Oracle) (L : o.lipshitz t k) (eve : Bob)
 # Soudness
 
 We assume that
-1. The oracle is k-Lipshitz
+1. The oracle is k-Lipschitz
 2. Bob is honest
 3. Alice is secretly Eve, and might be evil
 
 Then we have
-1. Alice can't raise the probability of success too much with close p, by Lipshitz.
+1. Alice can't raise the probability of success too much with close p, by Lipschitz.
 2. If Alice gives close p, Bob rarely rejects.
 3. If Alice is ever not close, Bob usually rejects, and Vera agrees.
 
@@ -387,7 +387,7 @@ for closeness during completeness.
 
 /-- Evil Alice produces a close true trace with low probability, since by remaining close
     she looks like a close oracle. -/
-lemma evil_alices_lies (o : Oracle) (L : o.lipshitz t k) (eve : Alice) (e0 : 0 < e) :
+lemma evil_alices_lies (o : Oracle) (L : o.lipschitz t k) (eve : Alice) (e0 : 0 < e) :
     (alices o eve (t+1)).pr (λ (p,y) ↦ close p (o.probs y) e ∧ y.head) ≤ (o.final t).prob true + k * e := by
   trans (snaps o eve e (t+1)).pr (λ (p,y) ↦ close p (o.probs y) e ∧ y.head)
   · apply le_of_eq; apply exp_congr'; intro (p,y); by_cases c : close p (o.probs y) e
@@ -485,7 +485,7 @@ lemma bobs_catches (o : Oracle) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 <
       · intro _ _ f; simp only [f, pr_pure, if_true]; linarith
 
 /-- Bob wins the debate with probability ≥ 8/15 -/
-theorem soundness' (o : Oracle) (L : o.lipshitz t k) (eve : Alice)
+theorem soundness' (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
     (c0 : 0 < c) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 < v) (v1 : v ≤ 1) (qv : q ≤ v) :
     (1 - v) * (1 - q) ^ (t+1) * ((o.final t).prob false - k * b) ≤
       (debate o eve (bob s b q) (vera c s v) t).prob false := by
@@ -512,7 +512,7 @@ theorem soundness' (o : Oracle) (L : o.lipshitz t k) (eve : Alice)
 We now fill in parameters.  We are given
 
   w = win margin of the computation: 1/2 < w ≤ (o.final t).prob true if we're in the language
-  k = Lipshitz constant of the oracle
+  k = Lipschitz constant of the oracle
   t = steps, eliding the +1 in t+1 above
   d = desired win margin of the debate protocol
 
@@ -571,7 +571,7 @@ structure Params (w d k : ℝ) (t : ℕ) where
   sound : d ≤ (1-v) * (1 - q * (t+1)) * (w - k * b)
 
 /-- Completeness for any valid parameters -/
-theorem completeness_p (o : Oracle) (L : o.lipshitz t k) (eve : Bob)
+theorem completeness_p (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob true) :
     d ≤ (debate o (alice p.c p.q) eve (vera p.c p.s p.v) t).prob true := by
   refine le_trans (le_trans p.complete ?_) (completeness' o L eve p.c0 p.cs p.q0 p.q1 p.v0 p.v1)
@@ -581,7 +581,7 @@ theorem completeness_p (o : Oracle) (L : o.lipshitz t k) (eve : Bob)
   apply one_add_mul_le_pow; linarith [p.q1]
 
 /-- Soundness for any valid parameters -/
-theorem soundness_p (o : Oracle) (L : o.lipshitz t k) (eve : Alice)
+theorem soundness_p (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob false) :
     d ≤ (debate o eve (bob p.s p.b p.q) (vera p.c p.s p.v) t).prob false := by
   refine le_trans (le_trans p.sound ?_) (soundness' o L eve p.c0 p.cs p.sb p.q0 p.v0 p.v1 p.qv)

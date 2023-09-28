@@ -102,8 +102,8 @@ structure Correct (w k : ℝ) (t : ℕ) (alice : Alice) (bob : Bob) (vera : Vera
   /-- Success is more likely than failure -/
   half_lt_w : 1/2 < w
   /-- If we're in the language, Alice wins -/
-  complete : ∀ (o : Oracle) (eve : Bob), o.lipshitz t k → (o.final t).prob true ≥ 2/3 →
+  complete : ∀ (o : Oracle) (eve : Bob), o.lipschitz t k → (o.final t).prob true ≥ 2/3 →
     (debate o alice eve vera t).prob true ≥ w
   /-- If we're out of the language, Bob wins -/
-  sound : ∀ (o : Oracle) (eve : Alice), o.lipshitz t k → (o.final t).prob false ≥ 2/3 →
+  sound : ∀ (o : Oracle) (eve : Alice), o.lipschitz t k → (o.final t).prob false ≥ 2/3 →
     (debate o eve bob vera t).prob false ≥ w
