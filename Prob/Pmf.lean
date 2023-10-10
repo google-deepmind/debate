@@ -87,6 +87,16 @@ lemma Prob.toPmf_support_finite (f : Prob α) : f.toPmf.support.Finite := by
 theorem Prob.toProb_toPmf (f : Prob α) : f.toPmf.toProb f.toPmf_support_finite = f := by
   ext; simp only [Pmf.prob_toProb, toPmf_coe, ENNReal.toReal_ofReal_eq_iff]; apply prob_nonneg
 
+/-- `Pmf → Prob → Pmf` is the identity on finitely-supported `Pmf`s. -/
+theorem Pmf.toPmf_toProb (f : Pmf α) (hf : f.support.Finite) : (f.toProb hf).toPmf = f := by
+  ext
+  simp only [Prob.toPmf_coe, prob_toProb, ne_eq, ENNReal.ofReal_toReal_eq_iff, apply_ne_top]
+
+/-- This enables the use of the `lift p to Prob α` tactic when `p : Pmf α`, which creates a
+new goal of `p.support.Finite`. -/
+instance : CanLift (Pmf α) (Prob α) Prob.toPmf (·.support.Finite) where
+  prf p hp := ⟨p.toProb hp, p.toPmf_toProb hp⟩
+
 /-- `Prob.toPmf` commutes with pure -/
 lemma Prob.pure_toPmf (x : α) : (pure x : Prob α).toPmf = pure x := by
   ext y; simp only [toPmf_coe, prob_pure, Pmf.instMonadPmf, Pmf.pure_apply]
