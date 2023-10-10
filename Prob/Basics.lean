@@ -110,7 +110,7 @@ lemma map_prob_of_inj {f : α → β} (inj : f.Injective) (x : Prob α) (y : α)
 /-- prob is in [0,1] -/
 lemma prob_le_one (f : Prob α) (x : α) : f.prob x ≤ 1 := by
   by_cases m : x ∈ f.supp
-  · rw [←f.total, ←@Finset.sum_singleton _ _ x f.prob _]
+  · rw [←f.total, ←Finset.sum_singleton f.prob]
     apply Finset.sum_le_sum_of_subset_of_nonneg
     · simp only [supp, Finsupp.mem_support_iff, ne_eq] at m
       simp only [Finset.singleton_subset_iff, Finsupp.mem_support_iff, ne_eq, m, not_false_eq_true]

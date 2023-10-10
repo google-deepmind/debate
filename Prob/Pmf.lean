@@ -1,4 +1,5 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
+import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Probability.ProbabilityMassFunction.Monad
 import Misc.Finset
 import Prob.Basics
@@ -98,3 +99,15 @@ lemma Prob.bind_toPmf (f : Prob α) (g : α → Prob β) : (f >>= g).toPmf = f.t
     ←Finset.sum_ofReal fun _ ↦ mul_nonneg (prob_nonneg _) (prob_nonneg _), ←ENNReal.ofReal_mul (prob_nonneg _)]
   refine (HasSum.tsum_eq ?_).symm; apply Finset.hasSum_sum
   intro _ m; simp only [Finsupp.mem_support_iff, not_not] at m; simp only [m, zero_mul, ENNReal.ofReal_zero]
+
+/-- `Prob.exp` is tsum over `toPmf` -/
+lemma Prob.tsum_toPmf_eq_exp (f : Prob α) (u : α → ℝ) : ∑' x, (f.toPmf x).toReal * u x = f.exp u := by
+  apply HasSum.tsum_eq; simp only [Prob.toPmf_coe, ENNReal.toReal_ofReal (prob_nonneg _)]
+  apply Finset.hasSum_sum; intro _ m
+  simp only [Finsupp.mem_support_iff, ne_eq, not_not] at m; simp only [m, zero_mul]
+
+/-- `Prob.exp` is integration over `toPmf`, if `α` is nice -/
+lemma Prob.integral_toPmf_eq_exp (f : Prob α) (u : α → ℝ) [MeasurableSpace α] [MeasurableSingletonClass α]
+    (i : MeasureTheory.Integrable u f.toPmf.toMeasure) :
+    ∫ x, u x ∂(f.toPmf.toMeasure) = f.exp u := by
+  simp_rw [←Prob.tsum_toPmf_eq_exp, ←smul_eq_mul]; exact Pmf.integral_eq_tsum _ _ i
