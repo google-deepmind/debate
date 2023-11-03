@@ -38,22 +38,26 @@ structure Prob (α : Type) where
   total : prob.sum (λ _ p ↦ p) = 1
 
 /-- The support for f -/
-def Prob.supp (f : Prob α) : Finset α := f.prob.support
+@[pp_dot] def Prob.supp (f : Prob α) : Finset α := f.prob.support
 
 /-- Integral w.r.t. a distribution -/
-def Prob.exp (f : Prob α) (g : α → ℝ) : ℝ := f.prob.sum (λ x p ↦ p * g x)
+@[pp_dot] def Prob.exp (f : Prob α) (g : α → ℝ) : ℝ :=
+  f.prob.sum (λ x p ↦ p * g x)
 
 /-- Expectation of a real-valued distribution -/
-def Prob.mean (f : Prob ℝ) : ℝ := f.exp id
+@[pp_dot] def Prob.mean (f : Prob ℝ) : ℝ := f.exp id
 
 /-- The probability that a prop holds -/
-def Prob.pr (f : Prob α) (p : α → Prop) := f.exp (λ x ↦ if p x then 1 else 0)
+@[pp_dot] def Prob.pr (f : Prob α) (p : α → Prop) :=
+  f.exp (λ x ↦ if p x then 1 else 0)
 
 /-- Conditional probabilities: f.cond p q = Pr_f(p | q) = f.pr (p ∧ q) / f.pr q -/
-def Prob.cond (f : Prob α) (p q : α → Prop) : ℝ := f.pr (λ x ↦ p x ∧ q x) / f.pr q
+@[pp_dot] def Prob.cond (f : Prob α) (p q : α → Prop) : ℝ :=
+  f.pr (λ x ↦ p x ∧ q x) / f.pr q
 
 /-- Conditional expectations: f.cexp u q = E_f(u | q) = f.exp (u * q) / f.pr q -/
-def Prob.cexp (f : Prob α) (u : α → ℝ) (q : α → Prop) : ℝ := f.exp (λ x ↦ if q x then u x else 0) / f.pr q
+@[pp_dot] def Prob.cexp (f : Prob α) (u : α → ℝ) (q : α → Prop) : ℝ :=
+  f.exp (λ x ↦ if q x then u x else 0) / f.pr q
 
 namespace Prob
 
