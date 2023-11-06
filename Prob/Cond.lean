@@ -37,7 +37,7 @@ lemma cond_mono (pq : ∀ x, f.prob x ≠ 0 → r x → p x → q x) : f.cond p 
 lemma cond_nonneg : 0 ≤ f.cond p q := div_nonneg pr_nonneg pr_nonneg
 lemma cond_le_one : f.cond p q ≤ 1 := by
   refine' div_le_one_of_le (pr_mono _) pr_nonneg; intro x _; exact And.right
-lemma cond_in_01 : f.cond p q ∈ Icc 0 1 := ⟨cond_nonneg, cond_le_one⟩
+lemma cond_mem_Icc : f.cond p q ∈ Icc 0 1 := ⟨cond_nonneg, cond_le_one⟩
 
 /-- cexp is nonneg if the inside is -/
 lemma cexp_nonneg (h : ∀ x, f.prob x ≠ 0 → q x → 0 ≤ u x) : 0 ≤ f.cexp u q := by
@@ -47,9 +47,38 @@ lemma cexp_nonneg (h : ∀ x, f.prob x ≠ 0 → q x → 0 ≤ u x) : 0 ≤ f.ce
   · simp only [qx, if_false, le_refl]
 
 /-- If something is true with probability 1, conditioning on it does nothing -/
+lemma cexp_eq_exp (q1 : f.pr q = 1) : f.cexp u q = f.exp u := by
+  simp only [cexp, q1, div_one]; simp only [pr_eq_one] at q1
+  apply exp_congr; intro x m; simp only [q1 x m, and_true, if_true]
+
+/-- If something is true with probability 1, conditioning on it does nothing -/
 lemma cond_eq_pr (q1 : f.pr q = 1) : f.cond p q = f.pr p := by
   simp only [cond, q1, div_one]; simp only [pr_eq_one] at q1
   apply pr_congr; intro x m; simp only [q1 x m, and_true]
+
+/-- cexp = 0 if the event never occurs for nonzero `u` -/
+lemma cexp_eq_zero (h : ∀ x, f.prob x ≠ 0 → q x → u x = 0) : f.cexp u q = 0 := by
+  have z : (f.exp fun x => if q x then u x else 0) = 0 := by
+    apply exp_eq_zero; intro _ m; split_ifs; apply h _ m; assumption; rfl
+  simp only [cexp, z, zero_div]
+
+/-- cond = 0 if the event never occurs -/
+lemma cond_eq_zero (h : ∀ x, f.prob x ≠ 0 → q x → ¬p x) : f.cond p q = 0 := by
+  have z : f.pr (λ x ↦ p x ∧ q x) = 0 := by rw [pr_eq_zero]; simp only [ne_eq, not_and']; exact h
+  rw [cond, z, zero_div]
+
+-- If the conditioning event has probability zero, cond and pr = 0
+lemma cexp_on_zero (q0 : f.pr q = 0) : f.cexp u q = 0 := by simp only [cexp, q0, div_zero]
+lemma cond_on_zero (q0 : f.pr q = 0) : f.cond p q = 0 := by simp only [cond, q0, div_zero]
+
+/-- cexp depends only on the conditional supp -/
+lemma cexp_congr {u v : α → ℝ} (uv : ∀ x, f.prob x ≠ 0 → q x → u x = v x) :
+    f.cexp u q = f.cexp v q := by
+  have uvq : ∀ x, f.prob x ≠ 0 → (if q x then u x else 0) = (if q x then v x else 0) := by
+    intro x m; by_cases qx : q x
+    · simp only [qx, uv x m qx]
+    · simp only [qx, if_false]
+  simp only [cexp, exp_congr uvq]
 
 /-- We can bound a cond bind uniformly in the first argument -/
 lemma cond_bind_le_of_forall_le {f : Prob α} {g : α → Prob β} {p q : β → Prop} {b : ℝ}
@@ -79,7 +108,49 @@ lemma exp_eq_cexp_add_cexp (q : α → Prop) : f.exp u = f.cexp u q * f.pr q + f
   simp only [pr, ←exp_add]; apply exp_congr; intro x _
   by_cases qx : q x; repeat { simp only [qx, if_true, if_false]; norm_num }
 
-/-- Probabilities can be decomposed as positive and negative conditional probabilities, even if there are zeros -/
+/-- exp can be decomposed as a expectation over cexp's w.r.t. a function -/
+lemma exp_eq_exp_cexp (g : α → β) :
+    f.exp u = (g <$> f).exp (fun k ↦ f.cexp u (fun y ↦ g y = k)) := by
+  simp only [map_eq, exp_bind, exp_pure, cexp, div_eq_mul_inv, ←exp_mul_const]
+  rw [exp_comm]
+  refine exp_congr fun x p ↦ ?_
+  have e : ∀ y, (if g x = g y then u x else 0) * (f.pr fun z => g z = g y)⁻¹ =
+      u x * (if g x = g y then 1 else 0) * (f.pr fun z ↦ g x = g z)⁻¹ := by
+    intro y; by_cases gxy : g x = g y
+    · simp only [gxy, ite_true, mul_one, mul_eq_mul_left_iff, inv_inj]
+      left; simp only [gxy, eq_comm]
+    · simp only [gxy, Ne.symm gxy, ite_false, zero_mul, mul_zero]
+  rw [exp_congr fun _ _ ↦ e _, exp_mul_const, exp_const_mul, pr, mul_assoc, mul_inv_cancel, mul_one]
+  refine (lt_of_lt_of_le ?_ (le_exp_of_cut (fun y ↦ y = x) (f.prob x) 1 ?_ ?_ ?_ ?_)).ne'
+  · rw [mul_one]; exact p.symm.lt_of_le (prob_nonneg _)
+  · rw [pr_eq_prob]
+  · intro _ _ e; simp only [e, ite_true, le_refl]
+  · intro _ _ _; split_ifs; norm_num; rfl
+  · norm_num
+
+/-- cexp can be decomposed as a expectation over cexp's w.r.t. a function -/
+lemma cexp_eq_cexp_cexp (g : α → β) (h : ∀ x y, f.prob x ≠ 0 → g x = g y → (q x ↔ q y)) :
+    f.cexp u q = (g <$> f).cexp (fun k ↦ f.cexp u (fun y ↦ g y = k))
+      (fun k ↦ ∃ x, g x = k ∧ q x) := by
+  rw [cexp, cexp]
+  refine congr_arg₂ _ ?_ ?_
+  · rw [exp_eq_exp_cexp g]
+    refine exp_congr fun k _ ↦ ?_
+    by_cases qk : ∃ z, g z = k ∧ q z
+    · simp only [qk, ite_true]
+      rcases qk with ⟨z,zk,qz⟩
+      refine cexp_congr fun w m e ↦ ?_
+      simp only [(h w z m (e.trans zk.symm)).mpr qz, ite_true]
+    · simp only [qk, ite_false]
+      refine cexp_eq_zero fun _ _ e ↦ ?_
+      simp only [not_exists, not_and] at qk
+      simp only [qk _ e, ite_false]
+  · simp only [pr_map]
+    refine pr_congr fun x m ↦ ⟨?_,?_⟩
+    · intro _; use x
+    · intro ⟨y,gyx,qy⟩; rwa [h x y m gyx.symm]
+
+ /-- Probabilities can be decomposed as positive and negative conditional probabilities, even if there are zeros -/
 lemma pr_eq_cond_add_cond (q : α → Prop) : f.pr p = f.cond p q * f.pr q + f.cond p (λ x ↦ ¬q x) * (1 - f.pr q) := by
   rw [pr]; simp only [cond_eq_cexp, exp_eq_cexp_add_cexp q]
 
@@ -123,26 +194,9 @@ lemma cexp_sum {s : Finset β} {u : β → α → ℝ} :
 lemma cexp_const_mul {s : ℝ} : f.cexp (λ x ↦ s * u x) q = s * f.cexp u q := by
   simp only [cexp, ite_mul_zero_right, exp_const_mul, mul_div]
 
-/-- cexp depends only on the conditional supp -/
-lemma cexp_congr {u v : α → ℝ} (uv : ∀ x, f.prob x ≠ 0 → q x → u x = v x) : f.cexp u q = f.cexp v q := by
-  have uvq : ∀ x, f.prob x ≠ 0 → (if q x then u x else 0) = (if q x then v x else 0) := by
-    intro x m; by_cases qx : q x
-    · simp only [qx, uv x m qx]
-    · simp only [qx, if_false]
-  simp only [cexp, exp_congr uvq]
-
 /-- cond depends only on the conditional supp -/
 lemma cond_congr {p q r : α → Prop} (pq : ∀ x, f.prob x ≠ 0 → r x → (p x ↔ q x)) : f.cond p r = f.cond q r := by
   simp only [cond_eq_cexp]; apply cexp_congr; simp only [ite_one_zero_congr]; exact pq
-
-/-- cond = 0 if the event never occurs -/
-lemma cond_eq_zero (h : ∀ x, f.prob x ≠ 0 → q x → ¬p x) : f.cond p q = 0 := by
-  have z : f.pr (λ x ↦ p x ∧ q x) = 0 := by rw [pr_eq_zero]; simp only [ne_eq, not_and']; exact h
-  rw [cond, z, zero_div]
-
--- If the conditioning event has probability zero, cond and pr = 0
-lemma cexp_on_zero (q0 : f.pr q = 0) : f.cexp u q = 0 := by simp only [cexp, q0, div_zero]
-lemma cond_on_zero (q0 : f.pr q = 0) : f.cond p q = 0 := by simp only [cond, q0, div_zero]
 
 /-- f.cond ¬p q = 1 - f.cond p q if f.pr q ≠ 0 -/
 lemma cond_neg (q0 : f.pr q ≠ 0) : f.cond (λ x ↦ ¬p x) q = 1 - f.cond p q := by
@@ -184,7 +238,7 @@ lemma cexp_bind_le_of_cut {f : Prob α} {g : α → Prob β} {u : β → ℝ} {q
                              ((f >>= λ x ↦ Prod.mk x <$> g x).cexp (λ y ↦ u y.2) (λ y ↦ q y.2 ∧ ¬i y.1)) := by
   rw [cexp_enrich, cexp_eq_cexp_add_cexp (λ y ↦ i y.1)]
   generalize hp : (f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ i y.1) (λ y ↦ q y.2) = p
-  have m : p ∈ Icc 0 1 := by rw [←hp]; exact cond_in_01
+  have m : p ∈ Icc 0 1 := by rw [←hp]; exact cond_mem_Icc
   exact average_le_max m
 
 /-- We can bound a cond bind in terms of an intermediate event occuring or not -/
@@ -228,7 +282,7 @@ lemma cond_bind_le_first {f : Prob α} {g : α → Prob β} (p q : β → Prop) 
   · apply pr_enrich_le_pr; intro x y fx gy ⟨py,qy,jx⟩; exact ⟨pi x y fx gy jx py qy, jx⟩
   · apply pr_le_pr_enrich; intro x y fx gy jx; exact ⟨jq x y fx gy jx,jx⟩
 
-/-- Bound an enriched cond by bounded the second half uniformly in the first half -/
+/-- Bound an enriched cond by bounding the second half uniformly in the first half -/
 lemma cond_bind_le_second {f : Prob α} {g : α → Prob β} (p q : β → Prop) (i : α → Prop) {b : ℝ}
     (b0 : 0 ≤ b) (gb : ∀ x, f.prob x ≠ 0 → i x → (g x).cond p q ≤ b) :
     (f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.snd) (λ y ↦ q y.snd ∧ i y.fst) ≤ b := by
@@ -247,5 +301,16 @@ lemma cond_bind_le_second {f : Prob α} {g : α → Prob β} (p q : β → Prop)
     · simp only [div_le_iff ((Ne.symm gq).lt_of_le pr_nonneg)] at gb;
       simp only [pr, ←exp_const_mul] at gb; convert gb
   · simp only [ix, and_false, ite_false, mul_zero, le_refl]
+
+/-- Bound a cexp uniformly -/
+lemma cexp_le_of_forall {b : ℝ} (h : ∀ x, f.prob x ≠ 0 → q x → u x ≤ b) (b0 : 0 ≤ b) :
+    f.cexp u q ≤ b := by
+  simp only [cexp]
+  apply div_le_of_nonneg_of_le_mul pr_nonneg b0
+  simp only [pr, ←exp_const_mul]
+  refine exp_mono fun x m ↦ ?_
+  by_cases qx : q x
+  · simp only [qx, ite_true, mul_one, h _ m qx]
+  · simp only [qx, ite_false, mul_zero, le_refl]
 
 end Prob

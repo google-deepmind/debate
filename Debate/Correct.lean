@@ -15,12 +15,14 @@ variable {t : ℕ} {k : ℝ}
 /-- Completeness for any valid parameters -/
 theorem completeness (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob true) :
-    d ≤ (debate o (alice p.c p.q) eve (vera p.c p.s p.v) t).prob true := completeness_p o L eve p m
+    d ≤ ((debate (alice p.c p.q) eve (vera p.c p.s p.v) t).prob' o).prob true :=
+  completeness_p o L eve p m
 
 /-- Soundness for any valid parameters -/
 theorem soundness (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob false) :
-    d ≤ (debate o eve (bob p.s p.b p.q) (vera p.c p.s p.v) t).prob false := soundness_p o L eve p m
+    d ≤ ((debate eve (bob p.s p.b p.q) (vera p.c p.s p.v) t).prob' o).prob false :=
+  soundness_p o L eve p m
 
 /-- Default valid parameters (not tuned) -/
 def defaults (k : ℝ) (t : ℕ) (k0 : 0 < k) : Params (2/3) (3/5) k t where

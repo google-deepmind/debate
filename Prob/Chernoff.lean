@@ -115,7 +115,8 @@ lemma hoeffdings_lemma {p : ℝ} (m : p ∈ Icc 0 1) {t : ℝ} (t0 : 0 ≤ t) :
 /-- The Bool case of Hoeffding's lemma -/
 lemma hoeffdings_lemma' (f : Prob Bool) {t : ℝ} (t0 : 0 ≤ t) :
     f.exp (λ x ↦ (t * bif x then 1 else 0).exp) ≤ (t * f.prob true + t^2/8).exp := by
-  have m := f.prob_mem_01 true; rw [f.eq_bernoulli]; simp only [bernoulli_prob_true m]; exact hoeffdings_lemma m t0
+  have m := f.prob_mem_Icc true; rw [f.eq_bernoulli]
+  simp only [bernoulli_prob_true m]; exact hoeffdings_lemma m t0
 
 /-- Moment generating function for count -/
 lemma exp_count (f : Prob Bool) (n : ℕ) (t : ℝ) :

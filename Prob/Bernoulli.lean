@@ -42,15 +42,15 @@ lemma bernoulli_prob_false {p : ℝ} (m : p ∈ Icc 0 1) : (bernoulli p).prob fa
   simp only [bool_prob_false_of_true, bernoulli_prob_true m]
 
 /-- 1/2 ∈ [0,1] -/
-lemma half_mem_01 : (1/2 : ℝ) ∈ Icc 0 1 := by norm_num
+lemma half_mem_Icc : (1/2 : ℝ) ∈ Icc 0 1 := by norm_num
 
 /-- One random bit -/
 def bit : Prob Bool := bernoulli (1/2)
 lemma bit_prob (x : Bool) : bit.prob x = 1/2 := by
   induction x
-  · have h := bernoulli_prob_false half_mem_01
+  · have h := bernoulli_prob_false half_mem_Icc
     norm_num at h; exact h
-  · exact bernoulli_prob_true half_mem_01
+  · exact bernoulli_prob_true half_mem_Icc
 
 /-- The expectation of a Bernoulli distribution in terms of true and false values -/
 lemma exp_bernoulli (p : ℝ) (m : p ∈ Icc 0 1) (f : Bool → ℝ) : (bernoulli p).exp f = (1-p) * f false + p * f true := by
@@ -59,5 +59,5 @@ lemma exp_bernoulli (p : ℝ) (m : p ∈ Icc 0 1) (f : Bool → ℝ) : (bernoull
 /-- All Bool computations are Bernoulli -/
 lemma Prob.eq_bernoulli (f : Prob Bool) : f = bernoulli (f.prob true) := by
   ext x; induction x
-  · simp only [bernoulli_prob_true (f.prob_mem_01 _), bool_prob_false_of_true]
-  · simp only [bernoulli_prob_true (f.prob_mem_01 _)]
+  · simp only [bernoulli_prob_true (f.prob_mem_Icc _), bool_prob_false_of_true]
+  · simp only [bernoulli_prob_true (f.prob_mem_Icc _)]

@@ -10,8 +10,12 @@ open Set
 open scoped Real
 noncomputable section
 
+-- We allow an arbitrary monad to support both `Prob` and `Comp s`
+universe u
+variable {m : Type → Type u} [Monad m]
+
 /-- `count f n` is the distribution of the number of `true` of `f` after `n` samples. -/
-def count (f : Prob Bool) : ℕ → Prob ℕ
+def count (f : m Bool) : ℕ → m ℕ
 | 0 => pure 0
 | n+1 => do
   let x := bif ←f then 1 else 0
@@ -19,7 +23,7 @@ def count (f : Prob Bool) : ℕ → Prob ℕ
   return x + y
 
 -- Facts about count
-@[simp] lemma count_zero (f : Prob Bool) : count f 0 = pure 0 := by simp only [count]
+@[simp] lemma count_zero (f : m Bool) : count f 0 = pure 0 := by simp only [count]
 lemma count_le (f : Prob Bool) {n k : ℕ} : n < k → (count f n).prob k = 0 := by
   induction' n with n lo generalizing k
   · intro h; simp only [count, prob_pure, Nat.le_zero] at h ⊢
@@ -39,7 +43,7 @@ lemma count_le' (f : Prob Bool) {n k : ℕ} : (count f n).prob k ≠ 0 → k ≤
   intro h; contrapose h; simp only [not_le, not_not] at h ⊢; exact count_le _ h
 
 /-- Estimate a probability via sample mean -/
-def estimate (f : Prob Bool) (n : ℕ) : Prob ℝ := (λ x : ℕ ↦ (x : ℝ) / n) <$> count f n
+def estimate (f : m Bool) (n : ℕ) : m ℝ := (λ x : ℕ ↦ (x : ℝ) / n) <$> count f n
 
 /-- count.mean = n * f.prob true -/
 lemma mean_count (f : Prob Bool) (n : ℕ) : (count f n).exp (λ x ↦ ↑x) = n * f.prob true := by

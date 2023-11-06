@@ -1,3 +1,4 @@
+import Comp.Basic
 import Debate.Protocol
 import Prob.Arith
 import Prob.Chernoff
@@ -6,8 +7,9 @@ import Misc.Finset
 import Misc.If
 
 /-!
-Correctness of the stochastic oracle doubly-efficient debate algorithm (details)
-See Correct.lean for the summary
+# Correctness of the stochastic oracle doubly-efficient debate algorithm (details)
+
+See `Correct.lean` for the summary.
 -/
 
 -- Work around https://github.com/leanprover/lean4/issues/2220
@@ -21,21 +23,27 @@ open Set
 open scoped Real
 noncomputable section
 
+variable {i : OracleId}
 variable {o : Oracle}
 variable {n t : ℕ}
 variable {k c s b e p q v : ℝ}
 
--- We first show that Honest Alice, Bob, and Vera do their jobs correctly to
--- within the necessary failure probabilities.
+/-!
+## Correctness of Alice, Bob, and Vera
+
+We first show that Honest Alice, Bob, and Vera do their jobs correctly to
+within the necessary failure probabilities.
+-/
 
 /-- samples' is samples without the Nat.ceil -/
 def samples' (e q : ℝ) : ℝ := -Real.log (q/2) / (2 * e^2)
 lemma le_samples (e q : ℝ) : samples' e q ≤ samples e q := Nat.le_ceil _
 
 /-- Honest Alice has error ≥ e with probability ≤ q -/
-lemma alice_pr_le (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (y : Vector Bool n) :
-    (alice e q o _ y).pr (λ p ↦ e ≤ |p - (o _ y).prob true|) ≤ q := by
-  refine' le_trans (chernoff_estimate_abs_le (o _ y) (samples e q) (le_of_lt e0)) _
+lemma alice_pr_le (e0 : 0 < e) (q0 : 0 < q) (y : Vector Bool n) :
+    ((alice' e q i _ y).prob' o).pr (λ p ↦ e ≤ |p - (o _ y).prob true|) ≤ q := by
+  simp only [alice', Comp.prob', Comp.prob_estimate, Comp.prob_query]
+  refine le_trans (chernoff_estimate_abs_le (o _ y) (samples e q) (le_of_lt e0)) ?_
   have le : -2 * ↑(samples e q) * e^2 ≤ -2 * samples' e q * e^2 :=
     mul_le_mul_of_nonneg_right (mul_le_mul_of_nonpos_left (le_samples _ _) (by norm_num)) (sq_nonneg _)
   refine' le_trans (mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr le) (by norm_num)) _; clear le
@@ -45,17 +53,20 @@ lemma alice_pr_le (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (y : Vector Bool n) :
 
 /-- Honest Alice has error ≤ e with probability ≥ 1 - q
     < e is also true, but annoying to work with later. -/
-lemma le_alice_pr (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (y : Vector Bool n) :
-    1 - q ≤ (alice e q o _ y).pr (λ p ↦ |p - (o _ y).prob true| ≤ e) := by
-  trans (alice e q o _ y).pr (λ p ↦ |p - (o _ y).prob true| < e)
-  · rw [pr_neg']; simp only [not_lt]; linarith [alice_pr_le o e0 q0 y]
+lemma le_alice_pr (o : Oracle) (i : OracleId) (e0 : 0 < e) (q0 : 0 < q) (y : Vector Bool n) :
+    1 - q ≤ ((alice' e q i _ y).prob' o).pr (λ p ↦ |p - (o _ y).prob true| ≤ e) := by
+  trans ((alice' e q i _ y).prob' o).pr (λ p ↦ |p - (o _ y).prob true| < e)
+  · rw [pr_neg']; simp only [not_lt]; linarith [alice_pr_le e0 q0 y]
   · apply pr_mono; intro _ _ h; exact le_of_lt h
 
 /-- Honest Bob usually accepts if Alice is off by ≤ c -/
-lemma bob_complete (cs : c < s) (q0 : 0 < q) {y : Vector Bool n} (good : |p - (o _ y).prob true| ≤ c) :
-    (bob c s q o _ y p).prob false ≤ q := by
-  simp only [bob, prob_bind, prob_pure, Bool.false_eq_decide_iff, not_lt]; rw [←pr]
-  refine' le_trans (pr_mono _) (alice_pr_le _ (by linarith) q0 y)
+lemma bob_complete (o : Oracle) (i : OracleId) (cs : c < s) (q0 : 0 < q) {y : Vector Bool n}
+    (good : |p - (o _ y).prob true| ≤ c) :
+    ((bob' c s q i _ y p).prob' o).prob false ≤ q := by
+  simp only [bob', prob_bind, prob_pure, Bool.false_eq_decide_iff, not_lt, Comp.prob',
+    Comp.prob_bind, Comp.prob_pure]
+  rw [←pr]
+  refine' le_trans (pr_mono _) (alice_pr_le (by linarith) q0 y)
   intro b _ h; generalize hx : (o _ y).prob true = x; rw [hx] at good; clear hx
   have e : b - x = -((p - b) - (p - x)) := by abel
   rw [e, abs_neg]; refine' le_trans _ (abs_sub_abs_le_abs_sub _ _)
@@ -64,10 +75,13 @@ lemma bob_complete (cs : c < s) (q0 : 0 < q) {y : Vector Bool n} (good : |p - (o
     _ ≤ |p - b| - |p - x| := sub_le_sub h good
 
 /-- Honest Bob usually rejects if Alice is off by ≥ s -/
-lemma bob_sound (cs : c < s) (q0 : 0 < q) {y : Vector Bool n} (bad : |p - (o _ y).prob true| ≥ s) :
-    (bob c s q o _ y p).prob true ≤ q := by
-  simp only [bob, prob_bind, prob_pure, Bool.true_eq_decide_iff, not_lt]; rw [←pr]
-  refine' le_trans (pr_mono _) (alice_pr_le _ (by linarith) q0 y)
+lemma bob_sound (o : Oracle) (i : OracleId) (cs : c < s) (q0 : 0 < q) {y : Vector Bool n}
+    (bad : |p - (o _ y).prob true| ≥ s) :
+    ((bob' c s q i _ y p).prob' o).prob true ≤ q := by
+  simp only [bob', prob_bind, prob_pure, Bool.true_eq_decide_iff, not_lt, Comp.prob',
+    Comp.prob_bind, Comp.prob_pure]
+  rw [←pr]
+  refine' le_trans (pr_mono _) (alice_pr_le (by linarith) q0 y)
   intro b _ h; generalize hx : (o _ y).prob true = x; rw [hx] at bad; clear hx
   have e : b - x = (p - x) - (p - b) := by abel
   rw [e]; refine' le_trans _ (abs_sub_abs_le_abs_sub _ _)
@@ -75,28 +89,33 @@ lemma bob_sound (cs : c < s) (q0 : 0 < q) {y : Vector Bool n} (bad : |p - (o _ y
     _ ≤ s - (c + s) / 2 := by linarith
     _ ≤ |p - x| - |p - b| := sub_le_sub bad (le_of_lt h)
 
--- As written the debate protocol is awkward to analyze, since Alice's and Bob's moves are
--- interleaved and intermediate states are discarded.  Therefore, we rewrite it into a
--- form where Alice moves first, then Bob moves.
+/-!
+## Transposed protocol with Alice moving first, then Bob
+
+As written the debate protocol is awkward to analyze, since Alice's and Bob's moves are
+interleaved and intermediate states are discarded.  Therefore, we rewrite it into a
+form where Alice moves first, then Bob moves.
+-/
 
 /-- All of Alice's moves, and the resulting trace -/
 def alices (o : Oracle) (alice : Alice) : (n : ℕ) → Prob (Vector ℝ n × Vector Bool n)
 | 0 => pure (Vector.nil, Vector.nil)
 | n+1 => do
   let (p,y) ← alices o alice n
-  let q ← alice o _ y
+  let q ← (alice _ y).prob' o
   let x ← bernoulli q
   return (q ::ᵥ p, x ::ᵥ y)
 
 /-- All of Bob's moves, after Alice's -/
-def bobs (o : Oracle) (bob : Bob) (vera : Vera) {n : ℕ} (p : Vector ℝ n) (y : Vector Bool n) : Prob (Option Bool) :=
+def bobs (o : Oracle) (bob : Bob) (vera : Vera) {n : ℕ} (p : Vector ℝ n) (y : Vector Bool n) :
+    Prob (Option Bool) :=
   match n with
   | 0 => pure none
   | _+1 => do match ←bobs o bob vera p.tail y.tail with
     | some r => return r
     | none => do
-      let b ← bob o _ y.tail p.head
-      return if b then none else some (←vera o _ y.tail p.head)
+      let b ← (bob _ y.tail p.head).prob' o
+      return if b then none else some (←(vera _ y.tail p.head).prob' o)
 
 /-- All of Alice's moves prior to Bob's, producing the full trace -/
 def trace (o : Oracle) (alice : Alice) (bob : Bob) (vera : Vera) (t : ℕ) :
@@ -115,30 +134,38 @@ def transposed (o : Oracle) (alice : Alice) (bob : Bob) (vera : Vera) (t : ℕ) 
 
 /-- Shim to turn alices >>= bobs into steps -/
 def shim {n : ℕ} (y : Vector Bool n) : Option Bool → State n
-| some r => Except.error r
-| none => Except.ok y
+| some r => .error r
+| none => .ok y
 
 /-- The transposed formulation of debate is the same -/
 lemma debate_eq_transposed (o : Oracle) (alice : Alice) (bob : Bob) (vera : Vera) (t : ℕ) :
-    debate o alice bob vera t = transposed o alice bob vera t := by
-  have h : ∀ n, steps o alice bob vera n = alices o alice n >>= λ (p,y) ↦ shim y <$> bobs o bob vera p y := by
+    (debate alice bob vera t).prob' o = transposed o alice bob vera t := by
+  have h : ∀ n, (steps alice bob vera n).prob (fun _ ↦ o) =
+      alices o alice n >>= λ (p,y) ↦ shim y <$> bobs o bob vera p y := by
     intro n; induction' n with n h
-    · simp only [steps, alices, pure_bind, bobs, shim, map_eq]
-    · simp only [steps, h, alices, bobs, bind_assoc]; apply congr_arg₂ _ rfl; funext ⟨p,y⟩
+    · simp only [steps, alices, pure_bind, bobs, shim, map_eq, Comp.prob', Comp.prob_pure]
+    · simp only [steps, h, alices, bobs, bind_assoc, Comp.prob', Comp.prob_bind]
+      apply congr_arg₂ _ rfl; funext ⟨p,y⟩
       simp only [pure_bind, map_eq, bind_assoc, Vector.tail_cons, Vector.head_cons, bind_comm _ (bobs _ _ _ _ _)]
       apply congr_arg₂ _ rfl; funext r; match r with
-      | some r => simp only [shim, pure_bind, bind_pure, bind_const]
+      | some r => simp only [shim, pure_bind, bind_pure, bind_const, Comp.prob_pure]
       | none =>
-        simp only [shim, step]; apply congr_arg₂ _ rfl; funext q
-        simp only [bind_assoc, bind_comm _ (bob _ _ _ _)]; apply congr_arg₂ _ rfl; funext s
+        simp only [shim, step, Comp.prob_bind, Comp.prob_allow_all]
+        apply congr_arg₂ _ rfl; funext q
+        simp only [bind_assoc, bind_comm _ ((bob _ _ _).prob _)]; apply congr_arg₂ _ rfl; funext s
         match s with
-        | true => simp only [if_true]; apply congr_arg₂ _ rfl; funext x; simp only [bind_const, pure_bind]
-        | false => simp only [if_false, bind_const, pure_bind]; exact congr_arg₂ _ rfl rfl
-  simp only [debate, transposed, trace, extract, h, bind_assoc, map_eq]
+        | true =>
+          simp only [if_true, Comp.prob_bind, Comp.prob_pure, Comp.prob_sample', bind_assoc]
+          apply congr_arg₂ _ rfl; funext x; simp only [bind_const, pure_bind]
+        | false =>
+          simp only [if_false, bind_const, pure_bind, Comp.prob_bind, Comp.prob_allow_all,
+            Comp.prob_pure]
+          exact congr_arg₂ _ rfl rfl
+  simp only [debate, transposed, trace, extract, h, bind_assoc, map_eq, Comp.prob', Comp.prob_bind]
   apply congr_arg₂ _ rfl; funext ⟨p,y⟩; apply congr_arg₂ _ rfl; funext r; match r with
-  | some true => simp only [shim, pure_bind, Option.getD]
-  | some false => simp only [shim, pure_bind, Option.getD]
-  | none => simp only [shim, pure_bind, Option.getD]
+  | some true => simp only [shim, pure_bind, Option.getD, Comp.prob_pure]
+  | some false => simp only [shim, pure_bind, Option.getD, Comp.prob_pure]
+  | none => simp only [shim, pure_bind, Option.getD, Comp.prob_pure]
 
 /-!
 # Close probabilities
@@ -180,7 +207,7 @@ lemma Oracle.fold_succ_prob (o : Oracle) {n : ℕ} (y : Vector Bool (n+1)) :
 
 /-- Snap an Alice into a close oracle -/
 def snap (o : Oracle) (alice : Alice) (e : ℝ) : Oracle := λ _ y ↦ do
-  let p ← alice o _ y
+  let p ← (alice _ y).prob' o
   let q := (o _ y).prob true
   let p := if |p - q| ≤ e then p else q
   bernoulli p
@@ -206,7 +233,7 @@ def snaps (o : Oracle) (alice : Alice) (e : ℝ) : (n : ℕ) → Prob (Vector �
 | 0 => pure (Vector.nil, Vector.nil)
 | n+1 => do
   let (p,y) ← snaps o alice e n
-  let q ← alice o _ y
+  let q ← (alice _ y).prob' o
   let c := (o _ y).prob true
   let x ← bernoulli (if |q - c| ≤ e then q else c)
   return (q ::ᵥ p, x ::ᵥ y)
@@ -270,7 +297,8 @@ lemma alices_close (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) :
       exp_const_mul, exp_const, exp_mul_const]
     apply le_exp_of_cut (fun (p,y) ↦ close p (o.probs y) e) ((1 - q)^n) (1 - q)
     · apply h
-    · intro (p,y) _ c; simp only at c; simp only [c, if_true, mul_one]; exact le_alice_pr o e0 q0 y
+    · intro (p,y) _ c; simp only at c; simp only [c, if_true, mul_one]
+      exact le_alice_pr o _ e0 q0 y
     · intro _ _ _; apply mul_nonneg; apply exp_nonneg; intro _ _; repeat apply ite_one_zero_nonneg
     · linarith
 
@@ -330,7 +358,7 @@ lemma evil_bobs_lies' (o : Oracle) (eve : Bob) (cs : c < s) (v0 : 0 < v)
           | true => simp only [if_true, bind_const, cond_pure, if_false, v0']
           | false =>
             simp only [if_false]; rw [cond_eq_pr]
-            · refine' le_trans _ (bob_complete cs v0 py.1)
+            · refine' le_trans _ (bob_complete o VeraId cs v0 py.1)
               simp only [pr_bind, pr_pure, Option.some_inj, exp_eq_prob]; rfl
             · simp only [pr_eq_one, prob_bind]
               intro r h; match r with
@@ -358,7 +386,7 @@ lemma evil_bobs_lies (o : Oracle) (eve : Bob) (cs : c < s) (v0 : 0 < v)
 theorem completeness' (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
     (c0 : 0 < c) (cs : c < s) (q0 : 0 < q) (q1 : q ≤ 1) (v0 : 0 < v) (v1 : v ≤ 1) :
     (1 - v) * ((o.final t).prob true - k * c - (1 - (1 - q) ^ (t + 1))) ≤
-      (debate o (alice c q) eve (vera c s v) t).prob true := by
+      ((debate (alice c q) eve (vera c s v) t).prob' o).prob true := by
   simp only [debate_eq_transposed, transposed, trace, map_bind, ge_iff_le, ←pr_eq_prob]
   refine le_trans ?_ (le_pr_bind_of_cut _ (1-v) (alices_success o L c0 q0 q1) ?_ ?_)
   · simp only [mul_comm _ (1-v), pr_eq_prob, le_refl]
@@ -421,27 +449,30 @@ lemma bobs_safe (o : Oracle) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 < v)
     simp only [Nat.succ_sub_one, vera_score, @exp_fintype (Option Bool), option_bool_univ, Finset.mem_singleton,
       Finset.mem_insert, not_false_eq_true, Finset.sum_insert, mul_zero, Finset.sum_singleton, mul_one, zero_add,
       prob_pure, ite_false, zero_mul, add_zero, ite_true, one_mul, prob_bind, ←exp_add] at h ⊢
-    generalize hbs : bobs o (bob s b q) (vera c s v) p.tail y.tail = bs; simp only [hbs] at h
-    generalize hbn : bob s b q o n y.tail p.head = bn
+    generalize hbs : bobs o (bob s b q) (vera c s v) p.tail y.tail = bs
+    simp only [hbs] at h
+    generalize hbn : (bob s b q n y.tail p.head).prob' o = bn
     trans (bs.prob (some false) + bs.prob none * (1 - v)) * (1 - q)
     · refine le_trans ?_ (mul_le_mul_of_nonneg_right h (by linarith))
       rw [mul_assoc, ←pow_succ']
     · simp only [add_mul]; apply add_le_add
       · exact mul_le_of_le_one_right (prob_nonneg _) (by linarith)
       · rw [mul_assoc]; refine mul_le_mul_of_nonneg_left ?_ (prob_nonneg _)
-        trans bn.exp (fun r ↦ (vera c s v o _ y.tail p.head).exp (fun x ↦
+        trans bn.exp (fun r ↦ ((vera c s v _ y.tail p.head).prob' o).exp (fun x ↦
           (if some false = if r then none else some x then 1 else 0) +
           (if none = if r then none else some x then 1 else 0) * (1 - v)))
         · by_cases ps : |p.head - (o _ y.tail).prob true| ≤ s
           · rw [mul_comm]; refine le_exp_of_cut (fun x ↦ x = true) (1-q) (1-v) ?_ ?_ ?_ (by linarith)
-            · have bc := bob_complete sb q0 ps; simp only [Nat.succ_sub_one] at bc
-              rw [←hbn, pr_eq_prob, bool_prob_true_of_false]; linarith
-            · intro x _ xe; simp only [xe, if_true, if_false, zero_add, one_mul, exp_const, le_refl]
+            · have bc := bob_complete o BobId sb q0 ps
+              simp only [Nat.succ_sub_one] at bc
+              rw [←hbn, pr_eq_prob, bool_prob_true_of_false, bob]; linarith
+            · intro x _ xe
+              simp only [xe, if_true, if_false, zero_add, one_mul, exp_const, le_refl]
             · intro _ _ _; apply exp_nonneg; intro _ _; apply add_nonneg ite_one_zero_nonneg
               apply mul_nonneg ite_one_zero_nonneg; linarith
           · apply le_exp_of_forall_le; intro r _; induction r
             · trans 1 - v; apply mul_le_of_le_one_right; linarith; linarith
-              have vs := bob_sound cs v0 (le_of_lt (not_le.mp ps))
+              have vs := bob_sound o VeraId cs v0 (le_of_lt (not_le.mp ps))
               simp only [if_false, Option.some_inj, zero_mul, add_zero, @eq_comm _ false, exp_eq_prob,
                 Nat.succ_sub_one, vera, bool_prob_false_of_true] at vs ⊢
               linarith
@@ -470,11 +501,11 @@ lemma bobs_catches (o : Oracle) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 <
           simp only [close_succ, not_and_or, pbn, Oracle.probs, Vector.tail_cons, Vector.head_cons,
             or_false, Nat.succ_sub_one, not_le] at pb
           rw [mul_comm]; refine le_exp_of_cut (fun x ↦ x = false) (1-q) (1-v) ?_ ?_ ?_ (by linarith)
-          · have bs := bob_sound sb q0 (le_of_lt pb)
-            simp only [Nat.succ_sub_one, bool_prob_false_of_true, pr_eq_prob] at bs ⊢
+          · have bs := bob_sound o BobId sb q0 (le_of_lt pb)
+            simp only [Nat.succ_sub_one, bool_prob_false_of_true, pr_eq_prob, bob] at bs ⊢
             linarith
           · intro x _ x0
-            have vs := bob_sound cs v0 (le_of_lt (lt_trans sb pb))
+            have vs := bob_sound o VeraId cs v0 (le_of_lt (lt_trans sb pb))
             simp only [x0, if_false, Option.some_inj, exp_eq_prob, bool_prob_false_of_true, vera,
               Nat.succ_sub_one] at vs ⊢
             linarith
@@ -488,7 +519,7 @@ lemma bobs_catches (o : Oracle) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 <
 theorem soundness' (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
     (c0 : 0 < c) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 < v) (v1 : v ≤ 1) (qv : q ≤ v) :
     (1 - v) * (1 - q) ^ (t+1) * ((o.final t).prob false - k * b) ≤
-      (debate o eve (bob s b q) (vera c s v) t).prob false := by
+      ((debate eve (bob s b q) (vera c s v) t).prob' o).prob false := by
   simp only [debate_eq_transposed, transposed, trace, map_bind, ge_iff_le, ←pr_eq_prob (alices _ _ _ >>= _)]
   have lies := evil_alices_lies o L eve (lt_trans c0 (lt_trans cs sb))
   rw [pr_neg', sub_le_iff_le_add, add_comm, ←sub_le_iff_le_add, bool_prob_true_of_false] at lies
@@ -573,7 +604,7 @@ structure Params (w d k : ℝ) (t : ℕ) where
 /-- Completeness for any valid parameters -/
 theorem completeness_p (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob true) :
-    d ≤ (debate o (alice p.c p.q) eve (vera p.c p.s p.v) t).prob true := by
+    d ≤ ((debate (alice p.c p.q) eve (vera p.c p.s p.v) t).prob' o).prob true := by
   refine le_trans (le_trans p.complete ?_) (completeness' o L eve p.c0 p.cs p.q0 p.q1 p.v0 p.v1)
   refine mul_le_mul_of_nonneg_left (add_le_add (add_le_add_right m _) ?_) (by linarith [p.v1])
   rw [neg_le_neg_iff, sub_le_iff_le_add, add_comm, ←sub_le_iff_le_add, mul_comm, sub_eq_add_neg, ←mul_neg,
@@ -583,7 +614,7 @@ theorem completeness_p (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
 /-- Soundness for any valid parameters -/
 theorem soundness_p (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob false) :
-    d ≤ (debate o eve (bob p.s p.b p.q) (vera p.c p.s p.v) t).prob false := by
+    d ≤ ((debate eve (bob p.s p.b p.q) (vera p.c p.s p.v) t).prob' o).prob false := by
   refine le_trans (le_trans p.sound ?_) (soundness' o L eve p.c0 p.cs p.sb p.q0 p.v0 p.v1 p.qv)
   simp only [mul_assoc]; refine mul_le_mul_of_nonneg_left (mul_le_mul ?_ ?_ ?_ ?_) (by linarith [p.v1])
   · rw [mul_comm, sub_eq_add_neg, ←mul_neg, ←Nat.cast_add_one]; apply one_add_mul_le_pow; linarith [p.q1]

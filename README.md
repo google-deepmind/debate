@@ -40,10 +40,12 @@ $M$ and $\mathcal{O}$ and let only $\mathcal{O}'$ vary (this slightly
 strengthens the resulting theorem).
 
 1. `Prob/Defs.lean`: Finitely supported probability distributions, representing stochastic computations.
-2. `Debate/Oracle.lean`: Our computation model, including the definition of Lipschitz oracles.
-3. `Debate/Protocol.lean`: The debate protocol, honest players, and the definition of correctness.
-4. `Debate/Correct.lean`: The final correctness theorems.
-5. `Debate/Details.lean`: Proof details.
+2. `Comp/Defs.lean`: Stochastic computations relative to a set of oracles.
+3. `Comp/Oracle.lean`: Our computation model, including the definition of Lipschitz oracles.
+4. `Debate/Protocol.lean`: The debate protocol, honest players, and the definition of correctness.
+5. `Debate/Correct.lean`: The final correctness theorems.
+6. `Debate/Details.lean`: Proof details.
+7. `Debate/Cost.lean`: Query complexity of each player.
 
 ## Installation
 

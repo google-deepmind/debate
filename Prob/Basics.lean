@@ -8,7 +8,7 @@ import Mathlib.Data.Vector
 import Prob.Defs
 
 /-!
-Basic properties of Prob
+## Basic properties of `Prob`
 -/
 
 open Classical
@@ -30,7 +30,7 @@ lemma prob_pure (x y : α) : (pure x : Prob α).prob y = if y = x then 1 else 0 
   simp only [Prob.prob, prob_pure', Finsupp.single_apply, eq_comm]
 
 /-- pure.exp is function application -/
-lemma exp_pure (x : α) (f : α → ℝ) : (pure x : Prob α).exp f = f x := by
+@[simp] lemma exp_pure (x : α) (f : α → ℝ) : (pure x : Prob α).exp f = f x := by
   simp only [exp, prob_pure', zero_mul, Finsupp.sum_single_index, one_mul]
 
 -- Basic definitions
@@ -86,7 +86,7 @@ lemma bind_comm_of_eq (f : Prob α) (g : Prob β) (h0 h1 : α → β → Prob γ
   rw [e]; apply bind_comm
 
 /-- Constants are their own expectation -/
-lemma exp_const (f : Prob α) (x : ℝ) : f.exp (λ _ ↦ x) = x := by
+@[simp] lemma exp_const (f : Prob α) (x : ℝ) : f.exp (λ _ ↦ x) = x := by
   simp only [exp, ←Finsupp.sum_mul, Prob.total, one_mul]
 
 /-- We can drop the left side of a bind if it's unused -/
@@ -116,7 +116,7 @@ lemma prob_le_one (f : Prob α) (x : α) : f.prob x ≤ 1 := by
       simp only [Finset.singleton_subset_iff, Finsupp.mem_support_iff, ne_eq, m, not_false_eq_true]
     · intro _ _ _; apply prob_nonneg
   · simp only [f.zero m, zero_le_one]
-lemma prob_mem_01 (f : Prob α) (x : α) : f.prob x ∈ Icc 0 1 := ⟨prob_nonneg _, prob_le_one f x⟩
+lemma prob_mem_Icc (f : Prob α) (x : α) : f.prob x ∈ Icc 0 1 := ⟨prob_nonneg _, prob_le_one f x⟩
 
 /-- Congruence for exp -/
 lemma exp_congr {f : Prob α} {g h : α → ℝ} (e : ∀ x, f.prob x ≠ 0 → (g x = h x)) : f.exp g = f.exp h := by

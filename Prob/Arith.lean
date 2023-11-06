@@ -64,6 +64,10 @@ lemma exp_div (s : ℝ) (f : Prob α) (g : α → ℝ) : f.exp (λ x ↦ g x / s
   simp only [div_eq_inv_mul, exp_const_mul]
 lemma exp_add (f : Prob α) (g h : α → ℝ) : f.exp (λ x ↦ g x + h x) = f.exp g + f.exp h := by
   simp only [exp, mul_add]; exact Finset.sum_add_distrib
+lemma exp_const_add (f : Prob α) (g : ℝ) (h : α → ℝ) : f.exp (λ x ↦ g + h x) = g + f.exp h := by
+  simp only [exp_add, exp_const]
+lemma exp_add_const (f : Prob α) (g : α → ℝ) (h : ℝ) : f.exp (λ x ↦ g x + h) = f.exp g + h := by
+  simp only [exp_add, exp_const]
 
 -- Expectation is monotonic
 lemma exp_mono {f : Prob α} {g h : α → ℝ} (gh : ∀ x, f.prob x ≠ 0 → g x ≤ h x) : f.exp g ≤ f.exp h := by
@@ -106,6 +110,8 @@ lemma pr_le_one {f : Prob α} {p : α → Prop} : f.pr p ≤ 1 := by
   simp only [pr]; apply le_trans (@exp_mono _ f _ (λ _ ↦ 1) _)
   · simp only [exp_const]; rfl
   · intro x _; split; rfl; norm_num
+lemma pr_mem_Icc {f : Prob α} {p : α → Prop} : f.pr p ∈ Icc 0 1 :=
+  ⟨pr_nonneg, pr_le_one⟩
 
 /-- pr of a constant prop is either 1 or 0 -/
 lemma pr_const (f : Prob α) (p : Prop) : f.pr (λ _ ↦ p) = if p then (1:ℝ) else 0 := by
@@ -162,6 +168,10 @@ lemma pr_eq_zero {f : Prob α} {p : α → Prop} : f.pr p = 0 ↔ ∀ x, f.prob 
     · simp only [ne_eq, IsEmpty.forall_iff, implies_true]
     · simp only [true_and]; use x, px, h
   · intro h; rw [←pr_false]; apply pr_congr; simp only [iff_false]; exact h
+
+/-- `pr ≠ 0` if there is some nonzero prob -/
+lemma pr_ne_zero (f : Prob α) (p : α → Prop) : f.pr p ≠ 0 ↔ ∃ x, f.prob x ≠ 0 ∧ p x := by
+  simp only [ne_eq, pr_eq_zero, not_forall, not_not, exists_prop]
 
 /-- f.pr p = 1 in terms of forall -/
 lemma pr_eq_one {f : Prob α} {p : α → Prop} : f.pr p = 1 ↔ ∀ x, f.prob x ≠ 0 → p x := by
@@ -239,6 +249,20 @@ lemma exp_eq_prob (f : Prob α) (y : α) {d : ∀ x, Decidable (x = y)} :
     f.exp (λ x ↦ @ite _ (x = y) (d _) (1:ℝ) 0) = f.prob y := by
   rw [←pr_eq_prob f y]; apply exp_congr; intro x _; rw [ite_one_zero_congr]
 
+/-- `f.exp u = 0` in terms of forall, for nonnegative `u` -/
+lemma exp_eq_zero_iff {f : Prob α} {u : α → ℝ} (h : ∀ x, f.prob x ≠ 0 → 0 ≤ u x) :
+    f.exp u = 0 ↔ ∀ x, f.prob x ≠ 0 → u x = 0 := by
+  constructor
+  · intro h; contrapose h; simp only [not_forall] at h; apply ne_of_gt
+    rcases h with ⟨x,px,ux⟩
+    refine lt_of_lt_of_le ?_ (le_exp_of_cut (fun y ↦ y = x) (f.prob x) (u x) ?_ ?_ ?_ ?_)
+    · apply mul_pos; exact px.symm.lt_of_le (prob_nonneg _); exact (Ne.symm ux).lt_of_le (h _ px)
+    · simp only [pr_eq_prob, le_refl]
+    · intro y _ e; rw [e]
+    · intro y py _; exact h _ py
+    · exact h _ px
+  · exact exp_eq_zero
+
 /-- Fintype expectations -/
 lemma exp_fintype (f : Prob α) [Fintype α] (g : α → ℝ) : f.exp g = Finset.univ.sum (fun x ↦ f.prob x * g x) := by
   simp only [exp, Finsupp.sum]; rw [Finset.sum_subset (Finset.subset_univ _)]
@@ -268,5 +292,17 @@ lemma exp_le_exp_of_map {f : Prob α} {g : Prob β} {u : α → ℝ} {v : β →
   apply Finset.sum_le_sum_of_map i inj uv
   · intro y m; simp only [Finsupp.mem_support_iff, not_not] at m; simp only [m, zero_mul]
   · intro y m; simp only [Finsupp.mem_support_iff] at m; apply mul_nonneg (prob_nonneg _) (v0 _ m)
+
+/-- `(f >>= g).prob y ≠ 0` iff there is nonzero prob intermediate `x` -/
+lemma prob_bind_ne_zero (f : Prob α) (g : α → Prob β) (y : β) :
+    (f >>= g).prob y ≠ 0 ↔ ∃ x, f.prob x ≠ 0 ∧ (g x).prob y ≠ 0 := by
+  constructor
+  · intro h; contrapose h
+    simp only [ne_eq, not_exists, not_and, not_not, prob_bind] at h ⊢
+    exact exp_eq_zero h
+  · intro ⟨x,f0,g0⟩
+    refine (lt_of_lt_of_le (mul_pos ?_ ?_) (le_prob_bind_of_cut x)).ne'
+    · exact f0.symm.lt_of_le (prob_nonneg _)
+    · exact g0.symm.lt_of_le (prob_nonneg _)
 
 end Prob

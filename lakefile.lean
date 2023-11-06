@@ -22,5 +22,8 @@ lean_lib Debate where
 lean_lib Prob where
   moreLeanArgs := moreLeanArgs
 
+lean_lib Comp where
+  moreLeanArgs := moreLeanArgs
+
 lean_lib Misc where
   moreLeanArgs := moreLeanArgs
