@@ -90,8 +90,7 @@ def bob (c s q : ℝ) : Bob := bob' c s q BobId
     We reuse Honest Bob with a weaker error probability, which we will set later. -/
 def vera (s v q : ℝ) : Vera := bob' s v q VeraId
 
-/-- One step of the debate protocol.
-    c and s are the completeness and soundness parameters of the verifier. -/
+/-- One step of the debate protocol -/
 def step (alice : Alice) (bob : Bob) (vera : Vera) (y : Vector Bool n) :
     Comp AllIds (State (n+1)) := do
   let p ← (alice _ y).allow_all
