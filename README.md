@@ -1,23 +1,27 @@
-Stochastic doubly efficient debate formalization
+Stochastic doubly-efficient debate formalization
 ================================================
 
 **Summary:** We formalize the correctness of the main stochastic oracle
-doubly-efficient debate protocol from Anonymous et al. in Lean 4.
+doubly-efficient debate protocol from
+[Brown-Cohen, Irving, Piliouras (2023), Scalable AI safety via doubly-efficient debate.](https://arxiv.org/abs/2311.14125)
+in Lean 4.
 
-https://arxiv.org/abs/1805.00899 is one approach to AI alignment of strong
-agents, using two agents ("provers") competing in a zero-sum game to convince a
-human judge ("verifier") of the truth or falsify of a claim.  Theoretically, if
-we model the judge as a polynomial time Turing machine, optimal play in the
-debate game can convince the judge of any statement in PSPACE.  However, this
-theoretical model is limited in several ways: the agents are assumed to have
-unbounded computational power, which is not a realistic assumption for ML
-agents, and the results consider only deterministic arguments.
+[Irving, Christiano, Amodei (2018), AI safety via debate](https://arxiv.org/abs/1805.00899)
+is one approach to AI alignment of strong agents, using two agents ("provers")
+competing in a zero-sum game to convince a human judge ("verifier") of the truth
+or falsify of a claim.  Theoretically, if we model the judge as a polynomial
+time Turing machine, optimal play in the debate game can convince the judge of
+any statement in PSPACE.  However, this theoretical model is limited in several
+ways: the agents are assumed to have unbounded computational power, which is not
+a realistic assumption for ML agents, and the results consider only
+deterministic arguments.
 
-Anonymous et al. improves the complexity theoretical model of
-debate to be "doubly-efficient": both the provers and the verifier have limited
-computational power.  It also treats stochastic arguments: the provers try to
-convince the judge of the result of a randomized computation involving calls to
-a random oracle.  Concretely, the main formalized result is
+[Brown-Cohen, Irving, Piliouras (2023), Scalable AI safety via doubly-efficient debate.](https://arxiv.org/abs/2311.14125)
+improves the complexity theoretic model of debate to be "doubly-efficient": both
+the provers and the verifier have limited computational power.  It also treats
+stochastic arguments: the provers try to convince the judge of the result of a
+randomized computation involving calls to a random oracle.  Concretely, the main
+formalized result is
 
 **Definition 6.1 (Lipschitz oracle machines).** An oracle Turing machine
 $M^\mathcal{O}$ is $K$-Lipschitz if, for any other oracle $\mathcal{O}'$ s.t.
@@ -47,14 +51,15 @@ strengthens the resulting theorem).
 6. `Debate/Details.lean`: Proof details.
 7. `Debate/Cost.lean`: Query complexity of each player.
 
+## Acknowledgements
+
+We thank [Eric Wieser](https://github.com/eric-wieser) for his careful review
+and many helpful suggestions.  The code is much better as a result!
+
 ## Installation
 
 1. Install Lean 4 and Lake via elan: https://github.com/leanprover/elan
 2. Run `lake build` within the directory.
-
-## Citing this work
-
-We will add this after the paper is reviewed.
 
 ## License and disclaimer
 
