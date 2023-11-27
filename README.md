@@ -3,20 +3,20 @@ Stochastic doubly-efficient debate formalization
 
 **Summary:** We formalize the correctness of the main stochastic oracle
 doubly-efficient debate protocol from
-[Brown-Cohen, Irving, Piliouras (2023), Scalable AI safety via doubly-efficient debate.](https://arxiv.org/abs/2311.14125)
+[Brown-Cohen, Irving, Piliouras (2023), Scalable AI safety via doubly-efficient debate](https://arxiv.org/abs/2311.14125)
 in Lean 4.
 
 [Irving, Christiano, Amodei (2018), AI safety via debate](https://arxiv.org/abs/1805.00899)
 is one approach to AI alignment of strong agents, using two agents ("provers")
 competing in a zero-sum game to convince a human judge ("verifier") of the truth
-or falsify of a claim.  Theoretically, if we model the judge as a polynomial
+or falsity of a claim.  Theoretically, if we model the judge as a polynomial
 time Turing machine, optimal play in the debate game can convince the judge of
 any statement in PSPACE.  However, this theoretical model is limited in several
 ways: the agents are assumed to have unbounded computational power, which is not
 a realistic assumption for ML agents, and the results consider only
 deterministic arguments.
 
-[Brown-Cohen, Irving, Piliouras (2023), Scalable AI safety via doubly-efficient debate.](https://arxiv.org/abs/2311.14125)
+[Brown-Cohen, Irving, Piliouras (2023), Scalable AI safety via doubly-efficient debate](https://arxiv.org/abs/2311.14125)
 improves the complexity theoretic model of debate to be "doubly-efficient": both
 the provers and the verifier have limited computational power.  It also treats
 stochastic arguments: the provers try to convince the judge of the result of a
