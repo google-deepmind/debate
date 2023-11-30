@@ -2,7 +2,7 @@ import Comp.Oracle
 import Prob.Defs
 
 /-!
-## Oracle-relative probabilitistic computations
+## Oracle-relative probabilistic computations
 
 `Prob α` represents the result of a probabilistic computation, but has no information about
 how long the computation took.  `Comp s α` is a computation that is allowed to consult any
