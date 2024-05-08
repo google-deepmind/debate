@@ -86,7 +86,7 @@ instance : Monad Prob where
   bind := λ f g ↦ by
     set prob := f.prob.sum (λ x p ↦ p • (g x).prob)
     have nonneg : ∀ x, 0 ≤ prob x := by
-      intro _; simp only [Finsupp.sum_apply]; apply Finset.sum_nonneg
+      intro _; simp only [Finsupp.sum_apply, prob]; apply Finset.sum_nonneg
       intro _ _; exact mul_nonneg f.prob_nonneg (g _).prob_nonneg
     have total : prob.sum (λ _ p ↦ p) = 1 := by
       rw [Finsupp.sum_sum_index]

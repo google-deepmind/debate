@@ -27,7 +27,7 @@ def count (f : m Bool) : ℕ → m ℕ
 lemma count_le (f : Prob Bool) {n k : ℕ} : n < k → (count f n).prob k = 0 := by
   induction' n with n lo generalizing k
   · intro h; simp only [count, prob_pure, Nat.le_zero] at h ⊢
-    by_cases k0 : k = 0; simp only [k0] at h; simp only [k0, ite_false]
+    by_cases k0 : k = 0; simp (config := {decide := true}) only [k0] at h; simp only [k0, ite_false]
   · intro h; simp only [count, prob_bind, prob_pure] at h ⊢
     apply Finset.sum_eq_zero; intro x _; rw [mul_eq_zero]; right
     apply Finset.sum_eq_zero; intro l m; induction x
@@ -38,7 +38,7 @@ lemma count_le (f : Prob Bool) {n k : ℕ} : n < k → (count f n).prob k = 0 :=
       contrapose m; simp only [not_not]; apply lo
       by_cases kl : k = 1 + l
       · rw [kl, add_comm 1 _, Nat.succ_lt_succ_iff] at h; exact h
-      · simp only [kl, if_false] at m
+      · simp (config := {decide := true}) only [kl, if_false] at m
 lemma count_le' (f : Prob Bool) {n k : ℕ} : (count f n).prob k ≠ 0 → k ≤ n := by
   intro h; contrapose h; simp only [not_le, not_not] at h ⊢; exact count_le _ h
 
@@ -68,4 +68,4 @@ lemma count_not (f : Prob Bool) (n : ℕ) : (count (not <$> f) n) = (λ x ↦ n 
 /-- estimate.mean = f.prob true -/
 lemma mean_estimate (f : Prob Bool) {n : ℕ} (n0 : n ≠ 0) : (estimate f n).mean = f.prob true := by
   simp only [mean, estimate, exp_map, id, exp_div, mean_count, Function.comp]
-  rw [mul_div_cancel_left]; rw [Nat.cast_ne_zero]; exact n0
+  rw [mul_div_cancel_left₀]; rw [Nat.cast_ne_zero]; exact n0

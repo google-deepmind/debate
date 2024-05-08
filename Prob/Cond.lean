@@ -25,7 +25,7 @@ lemma cond_eq_cexp : f.cond p q = f.cexp (λ x ↦ if p x then 1 else 0) q := by
 
 /-- cexp is monotonic -/
 lemma cexp_mono {u v : α → ℝ} (uv : ∀ x, f.prob x ≠ 0 → q x → u x ≤ v x) : f.cexp u q ≤ f.cexp v q := by
-  simp only [cexp]; refine' div_le_div_of_le_of_nonneg (exp_mono _) pr_nonneg
+  simp only [cexp]; refine' div_le_div_of_nonneg_right (exp_mono _) pr_nonneg
   intro x m; by_cases qx : q x
   repeat simp only [qx, if_true, if_false, uv x m, le_refl]
 
@@ -99,12 +99,12 @@ lemma cond_bind_le_of_forall_le {f : Prob α} {g : α → Prob β} {p q : β →
 lemma exp_eq_cexp_add_cexp (q : α → Prop) : f.exp u = f.cexp u q * f.pr q + f.cexp u (λ x ↦ ¬q x) * (1 - f.pr q) := by
   by_cases q0 : f.pr q = 0
   · simp only [cexp, q0, div_zero, sub_zero, mul_zero, zero_add, pr_neg, div_one, mul_one]
-    simp only [pr_eq_zero] at q0; apply exp_congr; intro x m; simp only [q0 x m, if_true, and_true]
+    simp only [pr_eq_zero] at q0; apply exp_congr; intro x m; simp (config := {decide := true}) only [q0 x m, if_true, and_true]
   by_cases q1 : f.pr q = 1
   · simp only [cexp, q1, div_one, mul_one, sub_self, mul_zero, add_zero]
     simp only [pr_eq_one] at q1; apply exp_congr; intro x m; simp only [q1 x m, if_true, and_true]
   replace q1 : 1 - f.pr q ≠ 0 := by rw [sub_ne_zero]; exact Ne.symm q1
-  simp only [cexp, pr_neg, div_mul_cancel _ q0, div_mul_cancel _ q1]
+  simp only [cexp, pr_neg, div_mul_cancel₀ _ q0, div_mul_cancel₀ _ q1]
   simp only [pr, ←exp_add]; apply exp_congr; intro x _
   by_cases qx : q x; repeat { simp only [qx, if_true, if_false]; norm_num }
 
@@ -165,11 +165,11 @@ lemma bayes' (f : Prob α) (a b : α → Prop) : f.cond a b * f.pr b = f.cond b 
   · have ab0 : f.pr (λ x ↦ b x ∧ a x) = 0 := by
       apply le_antisymm _ pr_nonneg; rw [←b0]; apply pr_mono; intro x _; exact And.left
     simp only [b0, ab0, div_zero, mul_zero, zero_div, zero_mul]
-  simp only [div_mul_cancel _ a0, div_mul_cancel _ b0, and_comm]
+  simp only [div_mul_cancel₀ _ a0, div_mul_cancel₀ _ b0, and_comm]
 
 /-- Bayes' theorem, ratio version -/
 theorem bayes (f : Prob α) (a b : α → Prop) (b0 : f.pr b ≠ 0) : f.cond a b = f.cond b a * f.pr a / f.pr b := by
-  rw [←bayes', mul_div_cancel _ b0]
+  rw [←bayes', mul_div_cancel_right₀ _ b0]
 
 /-- Pure cexps are simple -/
 lemma cexp_pure {x : α} : (pure x : Prob α).cexp u q = if q x then u x else 0 := by
@@ -192,7 +192,7 @@ lemma cexp_sum {s : Finset β} {u : β → α → ℝ} :
   · simp only [Finset.sum_empty, cexp_zero]
   · simp only [Finset.sum_insert m, cexp_add, h]
 lemma cexp_const_mul {s : ℝ} : f.cexp (λ x ↦ s * u x) q = s * f.cexp u q := by
-  simp only [cexp, ite_mul_zero_right, exp_const_mul, mul_div]
+  simp only [cexp, ← mul_ite_zero, exp_const_mul, mul_div]
 
 /-- cond depends only on the conditional supp -/
 lemma cond_congr {p q r : α → Prop} (pq : ∀ x, f.prob x ≠ 0 → r x → (p x ↔ q x)) : f.cond p r = f.cond q r := by
@@ -221,9 +221,9 @@ lemma cexp_eq_cexp_add_cexp (r : α → Prop) :
     intro x m; simp only [q0 x m, false_and, not_false_eq_true]
   rw [cexp, exp_eq_cexp_add_cexp r, add_div, mul_div_right_comm, mul_div_right_comm]; apply congr_arg₂
   · simp only [cexp_if, mul_div_right_comm, mul_assoc, bayes' f q r]
-    rw [mul_comm _ (f.pr q), ←mul_assoc, div_mul_cancel _ q0]
+    rw [mul_comm _ (f.pr q), ←mul_assoc, div_mul_cancel₀ _ q0]
   · simp only [cexp_if, mul_div_right_comm, mul_assoc, ←pr_neg, bayes' f q (λ x ↦ ¬r x)]
-    rw [mul_comm _ (f.pr q), ←mul_assoc, ←cond_neg q0, div_mul_cancel _ q0]
+    rw [mul_comm _ (f.pr q), ←mul_assoc, ←cond_neg q0, div_mul_cancel₀ _ q0]
 
 /-- Weighted averages are ≤ max -/
 lemma average_le_max {p x y : ℝ} (m : p ∈ Icc 0 1) : x*p + y*(1-p) ≤ max x y := by

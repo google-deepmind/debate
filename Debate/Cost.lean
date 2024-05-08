@@ -7,9 +7,6 @@ import Debate.Protocol
 See `Correct.lean` for the summary.
 -/
 
--- Work around https://github.com/leanprover/lean4/issues/2220
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y) -- See issue lean4#2220
-
 open Classical
 open Prob
 open Option (some none)
@@ -158,10 +155,10 @@ lemma post_stepsV (alice : Alice) (bob : Bob) (vera : Vera) :
         postV, bind_assoc, step]
       apply congr_arg₂ _ rfl ?_; ext p; apply congr_arg₂ _ rfl ?_; ext b
       induction b
-      · simp only [ite_false, Comp.allow_all_pure, pure_bind]
-      · simp only [ite_true]
+      · simp only [ite_false, Comp.allow_all_pure, pure_bind, postV]
+      · simp only [ite_cond_eq_true]
         rw [Comp.allow_all, Comp.allow, bind_assoc]
-        simp only [Comp.allow, pure_bind, Comp.sample'_bind]
+        simp only [Comp.allow, pure_bind, Comp.sample'_bind, postV]
 
 /-- Vera makes few queries, regardless of Alice and Bob -/
 theorem vera_debate_cost (o : Oracle) (alice : Alice) (bob : Bob) (t : ℕ):

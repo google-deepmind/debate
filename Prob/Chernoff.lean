@@ -1,8 +1,9 @@
-import Mathlib.Analysis.Calculus.ContDiffDef
+import Mathlib.Analysis.Calculus.ContDiff.Defs
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.Calculus.TangentCone
 import Mathlib.Analysis.Calculus.Taylor
+import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Data.Complex.Exponential
 import Mathlib.Data.Set.Intervals.Basic
 import Prob.Arith
@@ -17,14 +18,9 @@ We prove Hoeffding's inequality just for the Bernoulli case
 2. https://en.m.wikipedia.org/wiki/Hoeffding%27s_lemma
 -/
 
--- Work around https://github.com/leanprover/lean4/issues/2220
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y) -- See issue lean4#2220
-
 open Prob
 open Real (log)
 open Set
-
-lemma Real.exp_nonneg {x : ℝ} : 0 ≤ exp x := le_of_lt (Real.exp_pos _)
 
 lemma exp_bernoulli_exp {p : ℝ} (m : p ∈ Icc 0 1) (t : ℝ) :
     (bernoulli p).exp (λ x ↦ (t * bif x then 1 else 0).exp) = 1 - p + p * t.exp := by
@@ -98,13 +94,13 @@ lemma hoeffdings_lemma {p : ℝ} (m : p ∈ Icc 0 1) {t : ℝ} (t0 : 0 ≤ t) :
   simp only [exp_bernoulli_exp m]
   have p1 : 0 ≤ 1-p := by linarith [m.2]
   by_cases tz : t = 0
-  · simp only [tz, Real.exp_zero, mul_one, sub_add_cancel, zero_mul, ne_eq, zero_div, add_zero, le_refl, zero_pow]
+  · simp (config := {decide := true}) only [tz, Real.exp_zero, mul_one, sub_add_cancel, zero_mul, ne_eq, zero_div, add_zero, le_refl, zero_pow]
   replace t0 := (Ne.symm tz).lt_of_le t0; clear tz
   rw [←Real.exp_log (L_pos m), Real.exp_le_exp]
   rcases L_taylor m t0 with ⟨a,_,h⟩
   simp only [L] at h; rw [h]; clear h; norm_num
   generalize hb : p * a.exp = b
-  have b0 : 0 ≤ b := by rw [←hb]; exact mul_nonneg m.1 Real.exp_nonneg
+  have b0 : 0 ≤ b := by rw [←hb]; exact mul_nonneg m.1 (Real.exp_nonneg _)
   have amgm : (1-p:) * b / (1 - p + b)^2 ≤ 1/4 := mul_div_sq_sum_le p1 b0
   simp only [mul_comm b _, ←mul_div _ _ (2 : ℝ)] at amgm ⊢
   apply le_trans (add_le_add_right (mul_le_mul_of_nonneg_right amgm _) _)
@@ -127,7 +123,7 @@ lemma exp_count (f : Prob Bool) (n : ℕ) (t : ℝ) :
     have i : ∀ x : Bool, ↑(bif x then (1 : ℕ) else (0 : ℕ)) = (bif x then (1 : ℝ) else (0 : ℝ)) := by
       intro x; induction x; repeat simp only [cond_false, cond_true, Nat.cast_one, Nat.cast_zero]
     simp only [count, Nat.cast_succ, add_mul, one_mul, Real.exp_add, exp_bind, exp_pure, Nat.cast_add,
-      exp_const_mul, exp_mul_const, h, hz, mul_comm _ z.exp, i, pow_succ, mul_ite, mul_add, mul_one,
+      exp_const_mul, exp_mul_const, h, hz, mul_comm _ z.exp, i, pow_succ', mul_ite, mul_add, mul_one,
       mul_zero]
 
 /-- Weak Chernoff's theorem for the Bernoulli case -/
@@ -148,7 +144,7 @@ lemma chernoff_count_le (f : Prob Bool) (n : ℕ) {t : ℝ} (t0 : 0 ≤ t) :
     generalize hz : f.exp (λ x ↦ (s * bif x then 1 else 0).exp) = z; simp only [hz] at le ⊢
     have z0 : 0 ≤ z := by rw [←hz]; apply exp_nonneg; intro x _; apply Real.exp_nonneg
     rw [div_le_iff (Real.exp_pos _), ←Real.exp_add]
-    apply le_trans (pow_le_pow_of_le_left z0 le n); clear le z0 hz z
+    apply le_trans (pow_le_pow_left z0 le n); clear le z0 hz z
     simp only [hp, ←Real.rpow_nat_cast, ←Real.exp_mul]
     simp only [Real.rpow_nat_cast, Real.exp_le_exp, mul_comm _ (n:ℝ), mul_add, mul_div, ←add_assoc, ←mul_assoc]
     simp only [add_comm _ (s*t), ←add_assoc]; simp only [neg_mul, add_right_neg, zero_add]

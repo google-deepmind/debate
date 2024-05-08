@@ -1,7 +1,7 @@
 import Mathlib.Algebra.BigOperators.Order
 import Mathlib.Algebra.BigOperators.Ring
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.ENNReal
+import Mathlib.Data.ENNReal.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Topology.Instances.ENNReal
 
@@ -47,8 +47,8 @@ lemma Finset.sum_le_sum_of_map {s : Finset α} {t : Finset β} {u : α → ℝ} 
   rw [e]; clear e
   refine' le_trans _ (le_add_of_nonneg_right _)
   · rw [Finset.sum_image]
-    · apply Finset.sum_le_sum; intro x m; simp only [mem_filter] at m; exact le _ m.2
-    · intro x m y n; simp only [mem_filter] at m n; apply inj _ _ m.2 n.2
+    · apply Finset.sum_le_sum; intro x m; simp only [mem_filter, s'] at m; exact le _ m.2
+    · intro x m y n; simp only [mem_filter, s'] at m n; apply inj _ _ m.2 n.2
   · apply Finset.sum_nonneg; intro y m; simp only [mem_sdiff, not_exists, not_and] at m; exact v0 _ m.1
 
 /-- `ENNReal.ofReal` commutes with `Finset.sum` for nonnegative maps -/

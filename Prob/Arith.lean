@@ -37,6 +37,7 @@ instance : AddCommMonoid (Prob ℝ) where
   zero_add x := by simp only [add_eq, zero_eq, pure_bind, zero_add, bind_pure]
   add_zero x := by simp only [add_eq, zero_eq, pure_bind, add_zero, bind_pure]
   add_comm x y := by simp only [add_eq]; rw [bind_comm_of_eq]; ext x y; rw [add_comm]
+  nsmul := nsmulRec
 
 /-- • distributes over + -/
 instance : DistribMulAction ℝ (Prob ℝ) where
@@ -96,12 +97,14 @@ lemma le_exp_of_forall_le {f : Prob α} {u : α → ℝ} {b : ℝ} (h : ∀ x, f
 -- Mean is linear
 lemma mean_smul (s : ℝ) (f : Prob ℝ) : (s • f).mean = s * f.mean := by
   simp only [mean, smul_eq, exp_bind, exp_pure, id, exp_const_mul s f (λ x ↦ x)]
+  rfl
 lemma mean_add (f g : Prob ℝ) : (f + g).mean = f.mean + g.mean := by
   simp only [mean, add_eq, exp_bind, exp_pure, id, λ x ↦ exp_add g (λ _ ↦ x) (λ y ↦ y), exp_const, exp_add]
+  rfl
 
 /-- Mean is multiplicative -/
 lemma mean_mul (f g : Prob ℝ) : (f * g).mean = f.mean * g.mean := by
-  simp only [mean, mul_eq, exp_bind, exp_pure, id, ←exp_mul_const]; simp only [←exp_const_mul]
+  simp only [mean, mul_eq, exp_bind, exp_pure, id, ←exp_mul_const]; simp only [←exp_const_mul]; rfl
 
 -- f.pr is between 0 and 1
 lemma pr_nonneg {f : Prob α} {p : α → Prop} : 0 ≤ f.pr p := by
@@ -166,7 +169,7 @@ lemma pr_eq_zero {f : Prob α} {p : α → Prop} : f.pr p = 0 ↔ ∀ x, f.prob 
   · intro h; contrapose h; simp only [not_forall] at h ⊢; apply ne_of_gt
     rcases h with ⟨x,px,h⟩; rw [not_not] at h; rw [←pr_false]; apply pr_lt_pr
     · simp only [ne_eq, IsEmpty.forall_iff, implies_true]
-    · simp only [true_and]; use x, px, h
+    · simp only [not_false_iff, true_and]; use x, px, h
   · intro h; rw [←pr_false]; apply pr_congr; simp only [iff_false]; exact h
 
 /-- `pr ≠ 0` if there is some nonzero prob -/
@@ -186,7 +189,7 @@ lemma pr_eq_one {f : Prob α} {p : α → Prop} : f.pr p = 1 ↔ ∀ x, f.prob x
 lemma pr_neg {f : Prob α} {p : α → Prop} : f.pr (λ x ↦ ¬p x) = 1 - f.pr p := by
   rw [eq_sub_iff_add_eq, ←pr_true]; simp only [pr, ←exp_add]; apply exp_congr;
   intro x _; simp only [if_true]; by_cases h : p x
-  repeat simp only [h, if_false, if_true, zero_add, add_zero]
+  repeat simp (config := {decide := true}) only [h, if_false, if_true, zero_add, add_zero]
 lemma pr_neg' {f : Prob α} {p : α → Prop} : f.pr p = 1 - f.pr (λ x ↦ ¬p x) := by
   simp only [pr_neg, sub_sub_cancel]
 
@@ -205,7 +208,7 @@ lemma pr_or_le {f : Prob α} (p q : α → Prop) : f.pr (λ x ↦ p x ∨ q x) �
 lemma pr_eq_add_of_cut {f : Prob α} {p : α → Prop} (q : α → Prop) :
     f.pr p = f.pr (fun x ↦ p x ∧ q x) + f.pr (fun x ↦ p x ∧ ¬q x) := by
   simp only [pr, ←exp_add]; apply exp_congr; intro x _; by_cases px : p x;
-  repeat { by_cases qx : q x; repeat simp only [px, qx, if_true, if_false, add_zero, zero_add] }
+  repeat { by_cases qx : q x; repeat simp (config := {decide := true}) only [px, qx, if_true, if_false, add_zero, zero_add] }
 
 /-- Markov's inequality -/
 lemma markov' (f : Prob α) (g : α → ℝ) (f0 : ∀ x, f.prob x ≠ 0 → 0 ≤ g x) {a : ℝ} (a0 : 0 < a) :

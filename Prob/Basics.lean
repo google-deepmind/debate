@@ -154,7 +154,7 @@ lemma bool_prob_false_of_true {f : Prob Bool} : f.prob false = 1 - f.prob true :
   apply eq_sub_of_add_eq; rw [add_comm]; exact f.bool_total
 lemma bool_prob_true_of_false {f : Prob Bool} : f.prob true = 1 - f.prob false := eq_sub_of_add_eq f.bool_total
 lemma not_bool_prob {f : Prob Bool} {x : Bool} : (not <$> f).prob x = f.prob (not x) := by
-  rw [←Bool.not_not x, map_prob_of_inj, Bool.not_not]; rw [Bool.injective_iff]; simp only
+  rw [←Bool.not_not x, map_prob_of_inj, Bool.not_not]; rw [Bool.injective_iff]; decide
 
 /-- Bound a prob bind in terms of an intermediate event -/
 lemma le_prob_bind_of_cut {f : Prob α} {g : α → Prob β} (x : α) {y : β} :
