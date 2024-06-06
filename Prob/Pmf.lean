@@ -91,7 +91,7 @@ theorem Prob.toProb_toPmf (f : Prob α) : f.toPmf.toProb f.toPmf_support_finite 
 /-- `PMF → Prob → PMF` is the identity on finitely-supported `PMF`s. -/
 theorem PMF.toPmf_toProb (f : PMF α) (hf : f.support.Finite) : (f.toProb hf).toPmf = f := by
   ext
-  simp (config := {decide := true}) only [Prob.toPmf_coe, prob_toProb, ne_eq, ENNReal.ofReal_toReal_eq_iff, apply_ne_top, not_false]
+  simp [ne_eq, ENNReal.ofReal_toReal_eq_iff, apply_ne_top]
 
 /-- This enables the use of the `lift p to Prob α` tactic when `p : PMF α`, which creates a
 new goal of `p.support.Finite`. -/

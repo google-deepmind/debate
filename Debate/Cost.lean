@@ -152,11 +152,11 @@ lemma post_stepsV (alice : Alice) (bob : Bob) (vera : Vera) :
     ext x; induction' x with n y p
     · simp only [Comp.allow_all_pure, postV, pure_bind, bind_assoc]
     · simp only [stepV, Comp.sample'_bind, pure_bind, Comp.allow_all_bind, Comp.allow_all_allow,
-        postV, bind_assoc, step]
+        bind_assoc, postV, step]
       apply congr_arg₂ _ rfl ?_; ext p; apply congr_arg₂ _ rfl ?_; ext b
       induction b
       · simp only [ite_false, Comp.allow_all_pure, pure_bind, postV]
-      · simp only [ite_cond_eq_true]
+      · simp only [ite_true]
         rw [Comp.allow_all, Comp.allow, bind_assoc]
         simp only [Comp.allow, pure_bind, Comp.sample'_bind, postV]
 

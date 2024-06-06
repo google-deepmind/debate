@@ -1,14 +1,9 @@
-import Mathlib.Analysis.Calculus.ContDiff.Defs
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.Analysis.Calculus.TangentCone
-import Mathlib.Analysis.Calculus.Taylor
-import Mathlib.Analysis.Calculus.Deriv.Inv
-import Mathlib.Data.Complex.Exponential
-import Mathlib.Data.Set.Intervals.Basic
-import Prob.Arith
 import Prob.Bernoulli
 import Prob.Estimate
+import Mathlib.Analysis.Calculus.Taylor
+import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 /-!
 Weak Chernoff bound for {0,1} variables
@@ -26,7 +21,8 @@ lemma exp_bernoulli_exp {p : ℝ} (m : p ∈ Icc 0 1) (t : ℝ) :
     (bernoulli p).exp (λ x ↦ (t * bif x then 1 else 0).exp) = 1 - p + p * t.exp := by
   simp only [exp_bernoulli _ m, cond_false, mul_zero, Real.exp_zero, mul_one, cond_true]
 
-lemma uniqueDiffWithinAt_Icc {a b t : ℝ} (ab : a < b) (m : t ∈ Icc a b) : UniqueDiffWithinAt ℝ (Icc a b) t := by
+lemma uniqueDiffWithinAt_Icc {a b t : ℝ} (ab : a < b) (m : t ∈ Icc a b) :
+    UniqueDiffWithinAt ℝ (Icc a b) t := by
   apply uniqueDiffWithinAt_convex (convex_Icc _ _)
   simp only [interior_Icc]; exact nonempty_Ioo.mpr ab; simp only [closure_Icc, m]
 
@@ -35,11 +31,15 @@ lemma iteratedDerivWithin_eq_iteratedDeriv {f : ℝ → ℝ} (fc : ContDiff ℝ 
     {a b t : ℝ} (ab : a < b) (m : t ∈ Icc a b) {n : ℕ} :
     iteratedDerivWithin n f (Icc a b) t = iteratedDeriv n f t := by
   induction' n with n h generalizing m t
-  · simp only [Nat.zero_eq, ge_iff_le, not_le, gt_iff_lt, iteratedDerivWithin_zero, iteratedDeriv_zero]
+  · simp only [Nat.zero_eq, ge_iff_le, not_le, gt_iff_lt, iteratedDerivWithin_zero,
+      iteratedDeriv_zero]
   · have u : UniqueDiffWithinAt ℝ (Icc a b) t := uniqueDiffWithinAt_Icc ab m
-    rw [iteratedDerivWithin_succ u, iteratedDeriv_succ, ←derivWithin_univ, ←derivWithin_subset (subset_univ _) u]
+    rw [iteratedDerivWithin_succ u, iteratedDeriv_succ, ←derivWithin_univ,
+      ←derivWithin_subset (subset_univ _) u]
     apply derivWithin_congr; exact λ _ m ↦ h m; exact h m
-    apply DifferentiableAt.differentiableWithinAt; apply fc.differentiable_iteratedDeriv; apply WithTop.coe_lt_top
+    apply DifferentiableAt.differentiableWithinAt
+    apply fc.differentiable_iteratedDeriv
+    apply WithTop.coe_lt_top
 
 /-- The L function used in the Hoeffding's lemma proof -/
 noncomputable def L (p : ℝ) (t : ℝ) := log (1 - p + p * t.exp)
@@ -56,8 +56,10 @@ lemma Lc (m : p ∈ Icc 0 1) : ContDiff ℝ ⊤ (L p) := by
 lemma L_0 : L p 0 = 0 := by simp only [L, Real.exp_zero, mul_one, sub_add_cancel, Real.log_one]
 lemma L_d0 : HasDerivAt (λ t ↦ p * t.exp) (p * t.exp) t := (Real.hasDerivAt_exp _).const_mul _
 lemma L_d1 : HasDerivAt (λ t ↦ 1 - p + p * t.exp) (p * t.exp) t := L_d0.const_add _
-lemma dL (m : p ∈ Icc 0 1) : HasDerivAt (L p) (p * t.exp / (1 - p + p * t.exp)) t := L_d1.log (ne_of_gt (L_pos m))
-lemma ddL (m : p ∈ Icc 0 1) : HasDerivAt (λ t ↦ deriv (L p) t) ((p * t.exp * (1 - p:)) / (1 - p + p * t.exp)^2) t := by
+lemma dL (m : p ∈ Icc 0 1) : HasDerivAt (L p) (p * t.exp / (1 - p + p * t.exp)) t :=
+  L_d1.log (ne_of_gt (L_pos m))
+lemma ddL (m : p ∈ Icc 0 1) :
+    HasDerivAt (λ t ↦ deriv (L p) t) ((p * t.exp * (1 - p:)) / (1 - p + p * t.exp)^2) t := by
   have h : HasDerivAt (λ t ↦ deriv (L p) t)
       ((p * t.exp * ((1 - p:) + p * t.exp) - p * t.exp * (p * t.exp)) / ((1 - p:) + p * t.exp)^2) t := by
     simp only [(dL m).deriv]; exact L_d0.div L_d1 (ne_of_gt (L_pos m))
@@ -94,7 +96,7 @@ lemma hoeffdings_lemma {p : ℝ} (m : p ∈ Icc 0 1) {t : ℝ} (t0 : 0 ≤ t) :
   simp only [exp_bernoulli_exp m]
   have p1 : 0 ≤ 1-p := by linarith [m.2]
   by_cases tz : t = 0
-  · simp (config := {decide := true}) only [tz, Real.exp_zero, mul_one, sub_add_cancel, zero_mul, ne_eq, zero_div, add_zero, le_refl, zero_pow]
+  · simp [tz]
   replace t0 := (Ne.symm tz).lt_of_le t0; clear tz
   rw [←Real.exp_log (L_pos m), Real.exp_le_exp]
   rcases L_taylor m t0 with ⟨a,_,h⟩
@@ -119,7 +121,8 @@ lemma exp_count (f : Prob Bool) (n : ℕ) (t : ℝ) :
     (count f n).exp (λ x ↦ (t*x).exp) = (f.exp (λ x ↦ (t * bif x then 1 else 0).exp)) ^ n := by
   induction' n with k h
   · simp only [Nat.zero_eq, CharP.cast_eq_zero, zero_mul, Real.exp_zero, count, exp_pure, pow_zero, mul_zero]
-  · generalize hz : f.exp (λ x ↦ (t * bif x then 1 else 0).exp) = z; simp only [hz] at h
+  · generalize hz : f.exp (λ x ↦ (t * bif x then 1 else 0).exp) = z
+    simp only [hz] at h
     have i : ∀ x : Bool, ↑(bif x then (1 : ℕ) else (0 : ℕ)) = (bif x then (1 : ℝ) else (0 : ℝ)) := by
       intro x; induction x; repeat simp only [cond_false, cond_true, Nat.cast_one, Nat.cast_zero]
     simp only [count, Nat.cast_succ, add_mul, one_mul, Real.exp_add, exp_bind, exp_pure, Nat.cast_add,
@@ -145,8 +148,9 @@ lemma chernoff_count_le (f : Prob Bool) (n : ℕ) {t : ℝ} (t0 : 0 ≤ t) :
     have z0 : 0 ≤ z := by rw [←hz]; apply exp_nonneg; intro x _; apply Real.exp_nonneg
     rw [div_le_iff (Real.exp_pos _), ←Real.exp_add]
     apply le_trans (pow_le_pow_left z0 le n); clear le z0 hz z
-    simp only [hp, ←Real.rpow_nat_cast, ←Real.exp_mul]
-    simp only [Real.rpow_nat_cast, Real.exp_le_exp, mul_comm _ (n:ℝ), mul_add, mul_div, ←add_assoc, ←mul_assoc]
+    simp only [hp, ←Real.rpow_natCast, ←Real.exp_mul]
+    simp only [Real.rpow_natCast, Real.exp_le_exp, mul_comm _ (n:ℝ), mul_add, mul_div, ←add_assoc,
+      ←mul_assoc]
     simp only [add_comm _ (s*t), ←add_assoc]; simp only [neg_mul, add_right_neg, zero_add]
     simp only [add_comm (_ / _)]; apply add_le_add_right; rfl
   apply le_trans (h (4*t/n) (by positivity)); simp only [Real.exp_le_exp]; apply le_of_eq

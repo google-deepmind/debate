@@ -101,7 +101,7 @@ lemma cost_of_not_mem (f : Comp s α) (o : I → Oracle) {i : I} (is : i ∉ s) 
   · simp only [cost_sample, h, exp_const]
   · simp only [cost_query', h0, h1, ite_self, exp_const, add_zero]
     by_cases ij : i = j
-    · simp only [ij] at is; simp (config := {decide := true}) only [js] at is
+    · simp only [ij] at is; simp only [js, not_true_eq_false] at is
     · simp only [ij, if_false]
 
 /-- Expanding `query'.run` -/
@@ -307,8 +307,8 @@ macro "not_mem" : tactic =>
 
 /-- Show `s ⊆ t` via `simp` -/
 macro "subset" : tactic =>
-  `(tactic| simp (config := {decide := true}) only [Set.mem_singleton_iff, Set.singleton_subset_iff, Set.mem_insert_iff,
-    or_false])
+  `(tactic| simp only [Set.mem_singleton_iff, Set.singleton_subset_iff, Set.mem_insert_iff,
+    or_false, false_or])
 
 /-- Show a cost is zero via `i : I` not being in `s` -/
 macro "zero_cost" : tactic =>

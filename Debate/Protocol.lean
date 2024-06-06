@@ -1,4 +1,3 @@
-import Mathlib.Data.Vector.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Comp.Oracle
 import Comp.Defs
