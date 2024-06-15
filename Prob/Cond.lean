@@ -24,7 +24,8 @@ lemma cond_eq_cexp : f.cond p q = f.cexp (λ x ↦ if p x then 1 else 0) q := by
   repeat simp only [qx, and_true, if_true, if_false, and_false]
 
 /-- cexp is monotonic -/
-lemma cexp_mono {u v : α → ℝ} (uv : ∀ x, f.prob x ≠ 0 → q x → u x ≤ v x) : f.cexp u q ≤ f.cexp v q := by
+lemma cexp_mono {u v : α → ℝ} (uv : ∀ x, f.prob x ≠ 0 → q x → u x ≤ v x) :
+    f.cexp u q ≤ f.cexp v q := by
   simp only [cexp]; refine div_le_div_of_nonneg_right (exp_mono ?_) pr_nonneg
   intro x m; by_cases qx : q x
   repeat simp only [qx, if_true, if_false, uv x m, le_refl]
@@ -96,7 +97,8 @@ lemma cond_bind_le_of_forall_le {f : Prob α} {g : α → Prob β} {p q : β →
     simp only [fg0, div_zero, b0]
 
 /-- exp can be decomposed as positive and negative cexps, even if there are zeros -/
-lemma exp_eq_cexp_add_cexp (q : α → Prop) : f.exp u = f.cexp u q * f.pr q + f.cexp u (λ x ↦ ¬q x) * (1 - f.pr q) := by
+lemma exp_eq_cexp_add_cexp (q : α → Prop) :
+    f.exp u = f.cexp u q * f.pr q + f.cexp u (λ x ↦ ¬q x) * (1 - f.pr q) := by
   by_cases q0 : f.pr q = 0
   · simp only [cexp, q0, div_zero, sub_zero, mul_zero, zero_add, pr_neg, div_one, mul_one]
     simp only [pr_eq_zero] at q0; apply exp_congr; intro x m
@@ -199,17 +201,20 @@ lemma cexp_const_mul {s : ℝ} : f.cexp (λ x ↦ s * u x) q = s * f.cexp u q :=
   simp only [cexp, mul_ite_zero, ← exp_const_mul, mul_div]
 
 /-- cond depends only on the conditional supp -/
-lemma cond_congr {p q r : α → Prop} (pq : ∀ x, f.prob x ≠ 0 → r x → (p x ↔ q x)) : f.cond p r = f.cond q r := by
+lemma cond_congr {p q r : α → Prop} (pq : ∀ x, f.prob x ≠ 0 → r x → (p x ↔ q x)) :
+    f.cond p r = f.cond q r := by
   simp only [cond_eq_cexp]; apply cexp_congr; simp only [ite_one_zero_congr]; exact pq
 
 /-- f.cond ¬p q = 1 - f.cond p q if f.pr q ≠ 0 -/
 lemma cond_neg (q0 : f.pr q ≠ 0) : f.cond (λ x ↦ ¬p x) q = 1 - f.cond p q := by
   simp only [cond, eq_sub_iff_add_eq, ←add_div, div_eq_one_iff_eq q0]
   simp only [pr, ←exp_add]; apply exp_congr; intro x _
-  by_cases qx : q x; repeat { by_cases px : p x; repeat { simp only [px,qx, if_true, if_false]; norm_num }}
+  by_cases qx : q x
+  repeat { by_cases px : p x; repeat { simp only [px,qx, if_true, if_false]; norm_num }}
 
 /-- Rewrite cexp of an if into a more conditional cexp -/
-lemma cexp_if : f.cexp (λ x ↦ if p x then u x else 0) q = f.cexp u (λ x ↦ p x ∧ q x) * f.cond p q := by
+lemma cexp_if :
+    f.cexp (λ x ↦ if p x then u x else 0) q = f.cexp u (λ x ↦ p x ∧ q x) * f.cond p q := by
   simp only [cexp, cond, ←ite_and, @and_comm _ (p _)]
   by_cases z : f.pr (λ x ↦ p x ∧ q x) = 0
   · simp only [z, div_zero, zero_mul]; rw [exp_eq_zero, zero_div]
@@ -218,12 +223,14 @@ lemma cexp_if : f.cexp (λ x ↦ if p x then u x else 0) q = f.cexp u (λ x ↦ 
 
 /-- cexp can be decomposed as positive and negative cexps, even if there are zeros -/
 lemma cexp_eq_cexp_add_cexp (r : α → Prop) :
-    f.cexp u q = f.cexp u (λ x ↦ q x ∧ r x) * f.cond r q + f.cexp u (λ x ↦ q x ∧ ¬r x) * (1 - f.cond r q) := by
+    f.cexp u q = f.cexp u (λ x ↦ q x ∧ r x) * f.cond r q +
+      f.cexp u (λ x ↦ q x ∧ ¬r x) * (1 - f.cond r q) := by
   by_cases q0 : f.pr q = 0
   · simp only [cexp_on_zero q0, cond_on_zero q0, mul_zero, zero_add, sub_zero, mul_one]
     simp only [pr_eq_zero] at q0; rw [cexp, pr_eq_zero.mpr _, div_zero]
     intro x m; simp only [q0 x m, false_and, not_false_eq_true]
-  rw [cexp, exp_eq_cexp_add_cexp r, add_div, mul_div_right_comm, mul_div_right_comm]; apply congr_arg₂
+  rw [cexp, exp_eq_cexp_add_cexp r, add_div, mul_div_right_comm, mul_div_right_comm]
+  apply congr_arg₂
   · simp only [cexp_if, mul_div_right_comm, mul_assoc, bayes' f q r]
     rw [mul_comm _ (f.pr q), ←mul_assoc, div_mul_cancel₀ _ q0]
   · simp only [cexp_if, mul_div_right_comm, mul_assoc, ←pr_neg, bayes' f q (λ x ↦ ¬r x)]
@@ -238,8 +245,9 @@ lemma average_le_max {p x y : ℝ} (m : p ∈ Icc 0 1) : x*p + y*(1-p) ≤ max x
 
 /-- We can bound a cexp bind in terms of an intermediate event occuring or not -/
 lemma cexp_bind_le_of_cut {f : Prob α} {g : α → Prob β} {u : β → ℝ} {q : β → Prop} (i : α → Prop) :
-    (f >>= g).cexp u q ≤ max ((f >>= λ x ↦ Prod.mk x <$> g x).cexp (λ y ↦ u y.2) (λ y ↦ q y.2 ∧ i y.1))
-                             ((f >>= λ x ↦ Prod.mk x <$> g x).cexp (λ y ↦ u y.2) (λ y ↦ q y.2 ∧ ¬i y.1)) := by
+    (f >>= g).cexp u q ≤
+      max ((f >>= λ x ↦ Prod.mk x <$> g x).cexp (λ y ↦ u y.2) (λ y ↦ q y.2 ∧ i y.1))
+           ((f >>= λ x ↦ Prod.mk x <$> g x).cexp (λ y ↦ u y.2) (λ y ↦ q y.2 ∧ ¬i y.1)) := by
   rw [cexp_enrich, cexp_eq_cexp_add_cexp (λ y ↦ i y.1)]
   generalize hp : (f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ i y.1) (λ y ↦ q y.2) = p
   have m : p ∈ Icc 0 1 := by rw [←hp]; exact cond_mem_Icc
@@ -247,8 +255,9 @@ lemma cexp_bind_le_of_cut {f : Prob α} {g : α → Prob β} {u : β → ℝ} {q
 
 /-- We can bound a cond bind in terms of an intermediate event occuring or not -/
 lemma cond_bind_le_of_cut {f : Prob α} {g : α → Prob β} {p q : β → Prop} (i : α → Prop) :
-    (f >>= g).cond p q ≤ max ((f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.2) (λ y ↦ q y.2 ∧ i y.1))
-                             ((f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.2) (λ y ↦ q y.2 ∧ ¬i y.1)) := by
+    (f >>= g).cond p q ≤
+      max ((f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.2) (λ y ↦ q y.2 ∧ i y.1))
+          ((f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.2) (λ y ↦ q y.2 ∧ ¬i y.1)) := by
   simp only [cond_eq_cexp]; apply cexp_bind_le_of_cut
 
 /-- pr_mono when the left side is enriched -/
@@ -259,7 +268,8 @@ lemma pr_enrich_le_pr {f : Prob α} {g : α → Prob β} {p : α × β → Prop}
   · simp only [ix, if_true]; apply pr_le_one
   · apply le_of_eq; simp only [ix, if_false, pr_eq_zero, prob_map]; intro ⟨x',y⟩ pxy
     contrapose pxy; simp only [not_not] at pxy ⊢; rw [pr_eq_zero]; intro y' n
-    contrapose ix; simp only [not_not]; simp only [Prod.mk.injEq, not_and, not_forall, not_not, exists_prop] at ix
+    contrapose ix; simp only [not_not]
+    simp only [Prod.mk.injEq, not_and, not_forall, not_not, exists_prop] at ix
     simp only [←ix.1, ix.2] at n pxy; exact pi x y fx n pxy
 
 /-- pr_mono when the right side is enriched -/
@@ -273,14 +283,17 @@ lemma pr_le_pr_enrich {f : Prob α} {g : α → Prob β} {p : α × β → Prop}
     simp only [←pxy.1, pxy.2] at n ⊢; apply ip x y fx n ix
   · simp only [ix, if_false]; exact pr_nonneg
 
-/-- Bound an enriched cond by bounding the first half, if first half props relate to second half props -/
+/-- Bound an enriched cond by bounding the first half
+    if first half props relate to second half props -/
 lemma cond_bind_le_first {f : Prob α} {g : α → Prob β} (p q : β → Prop) (i j : α → Prop)
     (pi : ∀ x y, f.prob x ≠ 0 → (g x).prob y ≠ 0 → j x → p y → q y → i x)
     (jq : ∀ x y, f.prob x ≠ 0 → (g x).prob y ≠ 0 → j x → q y) :
-    (f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.snd) (λ y ↦ q y.snd ∧ j y.fst) ≤ f.cond i j := by
+    (f >>= λ x ↦ Prod.mk x <$> g x).cond (λ y ↦ p y.snd) (λ y ↦ q y.snd ∧ j y.fst) ≤
+      f.cond i j := by
   simp only [cond]; by_cases fj : f.pr j = 0
   · have qj : (f >>= λ x ↦ Prod.mk x <$> g x).pr (λ y ↦ q y.2 ∧ j y.1) = 0 := by
-      refine le_antisymm ?_ pr_nonneg; rw [←fj]; apply pr_enrich_le_pr; intro x y _ _ ⟨_,jx⟩; exact jx
+      refine le_antisymm ?_ pr_nonneg; rw [←fj]
+      apply pr_enrich_le_pr; intro x y _ _ ⟨_,jx⟩; exact jx
     simp only [fj, qj, div_zero, le_refl]
   refine div_le_div pr_nonneg ?_ ((Ne.symm fj).lt_of_le pr_nonneg) ?_
   · apply pr_enrich_le_pr; intro x y fx gy ⟨py,qy,jx⟩; exact ⟨pi x y fx gy jx py qy, jx⟩
@@ -294,7 +307,8 @@ lemma cond_bind_le_second {f : Prob α} {g : α → Prob β} (p q : β → Prop)
   by_cases d0 : (f >>= λ x ↦ Prod.mk x <$> g x).pr (λ y ↦ q y.2 ∧ i y.1) = 0
   · simp only [d0, div_zero, b0]
   simp only [div_le_iff ((Ne.symm d0).lt_of_le pr_nonneg)]
-  simp only [pr, ←exp_const_mul, exp_bind]; apply exp_mono; intro x m; simp only [exp_map, Function.comp]
+  simp only [pr, ←exp_const_mul, exp_bind]; apply exp_mono; intro x m
+  simp only [exp_map, Function.comp]
   by_cases ix : i x
   · simp only [ix, and_true]; specialize gb x m ix; simp only [cond] at gb
     by_cases gq : (g x).pr q = 0

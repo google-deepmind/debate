@@ -42,7 +42,8 @@ lemma alice_pr_le (o : Oracle) (i : OracleId) (e0 : 0 < e) (q0 : 0 < q) (y : Vec
   simp only [alice', Comp.prob', Comp.prob_estimate, Comp.prob_query]
   refine le_trans (chernoff_estimate_abs_le (o _ y) (samples e q) (le_of_lt e0)) ?_
   have le : -2 * ↑(samples e q) * e^2 ≤ -2 * samples' e q * e^2 :=
-    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonpos_left (le_samples _ _) (by norm_num)) (sq_nonneg _)
+    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonpos_left (le_samples _ _) (by norm_num))
+      (sq_nonneg _)
   refine le_trans (mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr le) (by norm_num)) ?_; clear le
   simp only [samples', div_eq_inv_mul, ←mul_assoc, mul_inv]; norm_num
   simp only [mul_comm _ (e^2), ←mul_assoc, mul_inv_cancel (pow_ne_zero _ (ne_of_gt e0)), one_mul]
@@ -144,7 +145,8 @@ lemma debate_eq_transposed (o : Oracle) (alice : Alice) (bob : Bob) (vera : Vera
     · simp only [steps, alices, pure_bind, bobs, shim, map_eq, Comp.prob', Comp.prob_pure]
     · simp only [steps, h, alices, bobs, bind_assoc, Comp.prob', Comp.prob_bind]
       apply congr_arg₂ _ rfl; funext ⟨p,y⟩
-      simp only [pure_bind, map_eq, bind_assoc, Vector.tail_cons, Vector.head_cons, bind_comm _ (bobs _ _ _ _ _)]
+      simp only [pure_bind, map_eq, bind_assoc, Vector.tail_cons, Vector.head_cons,
+        bind_comm _ (bobs _ _ _ _ _)]
       apply congr_arg₂ _ rfl; funext r; match r with
       | some r => simp only [shim, pure_bind, bind_pure, bind_const, Comp.prob_pure]
       | none =>
@@ -184,7 +186,8 @@ def close (x y : Vector ℝ n) (e : ℝ) : Prop := ∀ i, |x.get i - y.get i| �
 lemma close_nil {x y : Vector ℝ 0} (e : ℝ) : close x y e := by simp only [close, IsEmpty.forall_iff]
 lemma close_cons {p q : ℝ} {x y : Vector ℝ n} {e : ℝ} :
     close (p ::ᵥ x) (q ::ᵥ y) e = (|p - q| ≤ e ∧ close x y e) := by
-  simp only [close, Fin.forall_fin_succ, Vector.get_zero, Vector.head_cons, Vector.get_cons_succ, and_true]
+  simp only [close, Fin.forall_fin_succ, Vector.get_zero, Vector.head_cons, Vector.get_cons_succ,
+    and_true]
 lemma close_succ {x y : Vector ℝ (n+1)} {e : ℝ} :
     close x y e = (|x.head - y.head| ≤ e ∧ close x.tail y.tail e) := by
   convert @close_cons n x.head y.head x.tail y.tail e; repeat simp only [Vector.cons_head_tail]
@@ -257,7 +260,8 @@ lemma snaps_prob (alice : Alice) {p : Vector ℝ n} {y : Vector Bool n} (c : clo
 def final (x : Vector ℝ (t+1) × Vector Bool (t+1)) : Bool := x.2.head
 
 /-- As an oracle, snaps looks like snap (fold version) -/
-lemma snaps_eq_snap_fold (alice : Alice) (n : ℕ) : Prod.snd <$> snaps o alice e n = (snap o alice e).fold n := by
+lemma snaps_eq_snap_fold (alice : Alice) (n : ℕ) :
+    Prod.snd <$> snaps o alice e n = (snap o alice e).fold n := by
   induction' n with n h
   · simp only [snaps, map_pure, Oracle.fold]
   · simp only [snaps, Oracle.fold, map_bind, map_pure, ←h, map_eq, bind_assoc]
@@ -265,7 +269,8 @@ lemma snaps_eq_snap_fold (alice : Alice) (n : ℕ) : Prod.snd <$> snaps o alice 
     simp only [pure_bind, snap, bind_assoc]
 
 /-- As an oracle, snaps looks like snap (final version) -/
-lemma snaps_eq_snap_final (alice : Alice) (t : ℕ) : final <$> snaps o alice e (t+1) = (snap o alice e).final t := by
+lemma snaps_eq_snap_final (alice : Alice) (t : ℕ) :
+    final <$> snaps o alice e (t+1) = (snap o alice e).final t := by
   simp only [final, Oracle.final, ←snaps_eq_snap_fold, map_eq, bind_assoc, pure_bind]
 
 /-!
@@ -418,7 +423,8 @@ for closeness during completeness.
 /-- Evil Alice produces a close true trace with low probability, since by remaining close
     she looks like a close oracle. -/
 lemma evil_alices_lies (o : Oracle) (L : o.lipschitz t k) (eve : Alice) (e0 : 0 < e) :
-    (alices o eve (t+1)).pr (λ (p,y) ↦ close p (o.probs y) e ∧ y.head) ≤ (o.final t).prob true + k * e := by
+    (alices o eve (t+1)).pr (λ (p,y) ↦ close p (o.probs y) e ∧ y.head) ≤
+      (o.final t).prob true + k * e := by
   trans (snaps o eve e (t+1)).pr (λ (p,y) ↦ close p (o.probs y) e ∧ y.head)
   · apply le_of_eq; apply exp_congr'; intro (p,y); by_cases c : close p (o.probs y) e
     · simp only [c, true_and, snaps_prob _ c]
@@ -513,7 +519,8 @@ lemma bobs_catches (o : Oracle) (cs : c < s) (sb : s < b) (q0 : 0 < q) (v0 : 0 <
           rw [mul_comm]
           refine le_exp_of_cut (fun x ↦ x = false) (1-q) (1-v) ?_ ?_ ?_ (by linarith)
           · have bs := bob_sound o BobId sb q0 (le_of_lt pb)
-            simp only [Nat.succ_sub_one, bool_prob_false_of_true, pr_eq_prob, bob, Comp.prob'] at bs ⊢
+            simp only [Nat.succ_sub_one, bool_prob_false_of_true, pr_eq_prob, bob,
+              Comp.prob'] at bs ⊢
             linarith
           · intro x _ x0
             have vs := bob_sound o VeraId cs v0 (le_of_lt (lt_trans sb pb))
@@ -621,8 +628,8 @@ theorem completeness_p (o : Oracle) (L : o.lipschitz t k) (eve : Bob)
     d ≤ ((debate (alice p.c p.q) eve (vera p.c p.s p.v) t).prob' o).prob true := by
   refine le_trans (le_trans p.complete ?_) (completeness' o L eve p.c0 p.cs p.q0 p.q1 p.v0 p.v1)
   refine mul_le_mul_of_nonneg_left (add_le_add (add_le_add_right m _) ?_) (by linarith [p.v1])
-  rw [neg_le_neg_iff, sub_le_iff_le_add, add_comm, ←sub_le_iff_le_add, mul_comm, sub_eq_add_neg, ←mul_neg,
-    ←Nat.cast_add_one]
+  rw [neg_le_neg_iff, sub_le_iff_le_add, add_comm, ←sub_le_iff_le_add, mul_comm, sub_eq_add_neg,
+    ←mul_neg, ←Nat.cast_add_one]
   apply one_add_mul_le_pow; linarith [p.q1]
 
 /-- Soundness for any valid parameters -/
@@ -630,8 +637,11 @@ theorem soundness_p (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
     {w d : ℝ} (p : Params w d k t) (m : w ≤ (o.final t).prob false) :
     d ≤ ((debate eve (bob p.s p.b p.q) (vera p.c p.s p.v) t).prob' o).prob false := by
   refine le_trans (le_trans p.sound ?_) (soundness' o L eve p.c0 p.cs p.sb p.q0 p.v0 p.v1 p.qv)
-  simp only [mul_assoc]; refine mul_le_mul_of_nonneg_left (mul_le_mul ?_ ?_ ?_ ?_) (by linarith [p.v1])
-  · rw [mul_comm, sub_eq_add_neg, ←mul_neg, ←Nat.cast_add_one]; apply one_add_mul_le_pow; linarith [p.q1]
+  simp only [mul_assoc]
+  refine mul_le_mul_of_nonneg_left (mul_le_mul ?_ ?_ ?_ ?_) (by linarith [p.v1])
+  · rw [mul_comm, sub_eq_add_neg, ←mul_neg, ←Nat.cast_add_one]
+    apply one_add_mul_le_pow
+    linarith [p.q1]
   · apply add_le_add_right m
   · linarith [p.bw]
   · apply pow_nonneg; linarith [p.q1]

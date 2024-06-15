@@ -23,8 +23,8 @@ def bernoulli (p' : ℝ) : Prob Bool := by
       · simp only [Finsupp.coe_update, Function.update_same, sub_nonneg, max_le_iff, zero_le_one,
           min_le_iff, le_refl, true_or, and_self, p]
       · simp only [Finsupp.coe_update, ne_eq, Bool.true_eq_false, not_false_eq_true,
-          Function.update_noteq, Finsupp.single_eq_same, le_max_iff, le_refl, le_min_iff, zero_le_one,
-          true_and, true_or, p]
+          Function.update_noteq, Finsupp.single_eq_same, le_max_iff, le_refl, le_min_iff,
+          zero_le_one, true_and, true_or, p]
     total := by
       simp only [implies_true, Finsupp.sum_fintype, Fintype.univ_bool, Finsupp.coe_update,
         Finset.mem_singleton, Bool.true_eq_false, not_false_eq_true, Finset.sum_insert, ne_eq,
@@ -57,7 +57,8 @@ lemma bit_prob (x : Bool) : bit.prob x = 1/2 := by
   · exact bernoulli_prob_true half_mem_Icc
 
 /-- The expectation of a Bernoulli distribution in terms of true and false values -/
-lemma exp_bernoulli (p : ℝ) (m : p ∈ Icc 0 1) (f : Bool → ℝ) : (bernoulli p).exp f = (1-p) * f false + p * f true := by
+lemma exp_bernoulli (p : ℝ) (m : p ∈ Icc 0 1) (f : Bool → ℝ) :
+    (bernoulli p).exp f = (1-p) * f false + p * f true := by
   simp only [exp_bool, bernoulli_prob_false m, bernoulli_prob_true m]
 
 /-- All Bool computations are Bernoulli -/

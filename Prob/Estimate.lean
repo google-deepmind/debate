@@ -62,8 +62,8 @@ lemma count_not (f : Prob Bool) (n : ℕ) : (count (not <$> f) n) = (λ x ↦ n 
     apply Prob.bind_congr; intro x _; apply Prob.bind_congr; intro n m; induction x
     · simp only [Bool.not_false, cond_true, cond_false, zero_add]
       by_cases nk : n ≤ k
-      · simp only [Bool.not_false, cond_true, ge_iff_le, cond_false, zero_add, ←Nat.add_sub_assoc nk,
-          Nat.add_comm 1 k]
+      · simp only [Bool.not_false, cond_true, ge_iff_le, cond_false, zero_add,
+          ←Nat.add_sub_assoc nk, Nat.add_comm 1 k]
       · contrapose m; clear m; simp only [not_le, not_not] at nk ⊢; exact count_le f nk
     · simp only [Bool.not_true, cond_false, ge_iff_le, zero_add, cond_true, add_comm 1 n,
         Nat.succ_sub_succ_eq_sub]

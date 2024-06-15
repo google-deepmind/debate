@@ -53,12 +53,15 @@ lemma exp_map (f : α → β) (g : Prob α) (h : β → ℝ) : (f <$> g).exp h =
 lemma mean_pure (x : ℝ) : (pure x : Prob ℝ).mean = x := by simp only [mean, exp_pure, id]
 lemma mean_bind (f : Prob α) (g : α → Prob ℝ) : (f >>= g).mean = f.exp (λ x ↦ (g x).mean) := by
   simp only [mean, exp_bind]
-lemma mean_map (f : α → ℝ) (g : Prob α) : (f <$> g).mean = g.exp f := by simp only [mean, exp_map, Function.comp, id]
+lemma mean_map (f : α → ℝ) (g : Prob α) : (f <$> g).mean = g.exp f := by
+  simp only [mean, exp_map, Function.comp, id]
 
 -- Expectation is linear (weak version for independent events)
-lemma exp_const_mul (s : ℝ) (f : Prob α) (g : α → ℝ) : f.exp (λ x ↦ s * g x) = s * f.exp (λ x ↦ g x) := by
+lemma exp_const_mul (s : ℝ) (f : Prob α) (g : α → ℝ) :
+    f.exp (λ x ↦ s * g x) = s * f.exp (λ x ↦ g x) := by
   simp only [exp, ←mul_assoc _ s _, mul_comm _ s, mul_assoc s _ _, ←Finsupp.mul_sum]
-lemma exp_mul_const (s : ℝ) (f : Prob α) (g : α → ℝ) : f.exp (λ x ↦ g x * s) = f.exp (λ x ↦ g x) * s := by
+lemma exp_mul_const (s : ℝ) (f : Prob α) (g : α → ℝ) :
+    f.exp (λ x ↦ g x * s) = f.exp (λ x ↦ g x) * s := by
   simp only [mul_comm _ s, exp_const_mul]
 lemma exp_div (s : ℝ) (f : Prob α) (g : α → ℝ) : f.exp (λ x ↦ g x / s) = f.exp (λ x ↦ g x) / s := by
   simp only [div_eq_inv_mul, exp_const_mul]
@@ -70,14 +73,16 @@ lemma exp_add_const (f : Prob α) (g : α → ℝ) (h : ℝ) : f.exp (λ x ↦ g
   simp only [exp_add, exp_const]
 
 -- Expectation is monotonic
-lemma exp_mono {f : Prob α} {g h : α → ℝ} (gh : ∀ x, f.prob x ≠ 0 → g x ≤ h x) : f.exp g ≤ f.exp h := by
+lemma exp_mono {f : Prob α} {g h : α → ℝ} (gh : ∀ x, f.prob x ≠ 0 → g x ≤ h x) :
+    f.exp g ≤ f.exp h := by
   simp only [exp]; apply Finset.sum_le_sum; intro x m
   exact mul_le_mul_of_nonneg_left (gh x (mem_iff.mp m)) (prob_nonneg _)
 lemma exp_nonneg {f : Prob α} {g : α → ℝ} (g0 : ∀ x, f.prob x ≠ 0 → 0 ≤ g x) : 0 ≤ f.exp g := by
   have m := exp_mono g0; simp only [exp_const] at m; exact m
 
 /-- Expectation is monotonic, general version for different distributions -/
-lemma exp_mono' {f g : Prob α} (u v : α → ℝ) (h : ∀ x, f.prob x * u x ≤ g.prob x * v x) : f.exp u ≤ g.exp v := by
+lemma exp_mono' {f g : Prob α} (u v : α → ℝ) (h : ∀ x, f.prob x * u x ≤ g.prob x * v x) :
+    f.exp u ≤ g.exp v := by
   simp only [exp, Finsupp.sum]
   rw [Finset.sum_subset (Finset.subset_union_left f.prob.support g.prob.support),
     Finset.sum_subset (Finset.subset_union_right f.prob.support g.prob.support)]
@@ -86,11 +91,13 @@ lemma exp_mono' {f g : Prob α} (u v : α → ℝ) (h : ∀ x, f.prob x * u x �
   · intro x _ m; simp only [Finsupp.mem_support_iff, ne_eq, not_not] at m; simp only [m, zero_mul]
 
 /-- Upper bounding an expectation by bounding each element -/
-lemma exp_le_of_forall_le {f : Prob α} {u : α → ℝ} {b : ℝ} (h : ∀ x, f.prob x ≠ 0 → u x ≤ b) : f.exp u ≤ b := by
+lemma exp_le_of_forall_le {f : Prob α} {u : α → ℝ} {b : ℝ} (h : ∀ x, f.prob x ≠ 0 → u x ≤ b) :
+    f.exp u ≤ b := by
   rw [←exp_const f b]; exact exp_mono h
 
 /-- Lower bounding an expectation by bounding each element -/
-lemma le_exp_of_forall_le {f : Prob α} {u : α → ℝ} {b : ℝ} (h : ∀ x, f.prob x ≠ 0 → b ≤ u x) : b ≤ f.exp u := by
+lemma le_exp_of_forall_le {f : Prob α} {u : α → ℝ} {b : ℝ} (h : ∀ x, f.prob x ≠ 0 → b ≤ u x) :
+    b ≤ f.exp u := by
   rw [←exp_const f b]; exact exp_mono h
 
 -- Mean is linear
@@ -122,7 +129,8 @@ lemma pr_const (f : Prob α) (p : Prop) : f.pr (λ _ ↦ p) = if p then (1:ℝ) 
   simp only [pr, exp_const]
 
 /-- pr is monotonic -/
-lemma pr_mono {f : Prob α} {p q : α → Prop} (pq : ∀ x, f.prob x ≠ 0 → p x → q x) : f.pr p ≤ f.pr q := by
+lemma pr_mono {f : Prob α} {p q : α → Prop} (pq : ∀ x, f.prob x ≠ 0 → p x → q x) :
+    f.pr p ≤ f.pr q := by
   apply exp_mono; intro x m; rw [ite_le_ite_iff]; exact pq x m
 
 /-- (pure x).pr p = if p x else 1 else 0 -/
@@ -130,7 +138,8 @@ lemma pr_pure {x : α} (p : α → Prop) : (pure x : Prob α).pr p = if p x then
   simp only [pr, exp_pure]
 
 /-- (f >>= g).pr works as expected -/
-lemma pr_bind {f : Prob α} {g : α → Prob β} (p : β → Prop) : (f >>= g).pr p = f.exp (λ x ↦ (g x).pr p) := by
+lemma pr_bind {f : Prob α} {g : α → Prob β} (p : β → Prop) :
+    (f >>= g).pr p = f.exp (λ x ↦ (g x).pr p) := by
   simp only [pr, exp_bind]
 
 /-- (f <$> g).pr works as expected -/
@@ -157,8 +166,10 @@ lemma pr_lt_pr {f : Prob α} {p q : α → Prop} (le : ∀ x, f.prob x ≠ 0 →
   · rcases lt with ⟨x,m,px,qx⟩; use x,m; simp only [px, qx, if_true, if_false, zero_lt_one]
 
 /-- Pull ∧ const out of a pr -/
-lemma pr_and_const {f : Prob α} {p : α → Prop} {q : Prop} : f.pr (λ x ↦ p x ∧ q) = f.pr p * (if q then 1 else 0) := by
-  by_cases h : q; repeat simp only [h, and_true, if_true, mul_one, and_false, pr_false, if_false, mul_zero]
+lemma pr_and_const {f : Prob α} {p : α → Prop} {q : Prop} :
+    f.pr (λ x ↦ p x ∧ q) = f.pr p * (if q then 1 else 0) := by
+  by_cases h : q
+  repeat simp only [h, and_true, if_true, mul_one, and_false, pr_false, if_false, mul_zero]
 
 /-- f.exp u = 0 in terms of forall -/
 lemma exp_eq_zero {f : Prob α} {u : α → ℝ} (u0 : ∀ x, f.prob x ≠ 0 → u x = 0) : f.exp u = 0 := by
@@ -222,8 +233,8 @@ lemma markov (f : Prob ℝ) (f0 : ∀ x, f.prob x ≠ 0 → 0 ≤ x) {a : ℝ} (
 
 /-- Lower bounding an exp in terms of an event -/
 lemma le_exp_of_cut {f : Prob α} {u : α → ℝ} (i : α → Prop) (a b : ℝ) (fi : a ≤ f.pr i)
-    (iu : ∀ x, f.prob x ≠ 0 → i x → b ≤ u x) (u0 : ∀ x, f.prob x ≠ 0 → ¬i x → 0 ≤ u x) (b0 : 0 ≤ b) :
-    a * b ≤ f.exp u := by
+    (iu : ∀ x, f.prob x ≠ 0 → i x → b ≤ u x) (u0 : ∀ x, f.prob x ≠ 0 → ¬i x → 0 ≤ u x)
+    (b0 : 0 ≤ b) : a * b ≤ f.exp u := by
   have h : ∀ x, f.prob x ≠ 0 → b * (if i x then 1 else 0) ≤ u x := by
     intro x fx; by_cases ix : i x
     · simp only [ix, if_true, mul_one]; exact iu x fx ix
@@ -268,12 +279,14 @@ lemma exp_eq_zero_iff {f : Prob α} {u : α → ℝ} (h : ∀ x, f.prob x ≠ 0 
   · exact exp_eq_zero
 
 /-- Fintype expectations -/
-lemma exp_fintype (f : Prob α) [Fintype α] (g : α → ℝ) : f.exp g = Finset.univ.sum (fun x ↦ f.prob x * g x) := by
+lemma exp_fintype (f : Prob α) [Fintype α] (g : α → ℝ) :
+    f.exp g = Finset.univ.sum (fun x ↦ f.prob x * g x) := by
   simp only [exp, Finsupp.sum]; rw [Finset.sum_subset (Finset.subset_univ _)]
   · intro _ _ m; simp only [Finsupp.mem_support_iff, ne_eq, not_not] at m; simp only [m, zero_mul]
 
 /-- Boolean expectations -/
-lemma exp_bool (f : Prob Bool) (g : Bool → ℝ) : f.exp g = f.prob false * g false + f.prob true * g true := by
+lemma exp_bool (f : Prob Bool) (g : Bool → ℝ) :
+    f.exp g = f.prob false * g false + f.prob true * g true := by
   simp only [exp_fintype, Fintype.sum_bool, add_comm]
 
 -- Given a bind, enrich the output type to include the intermediate type.  This lets us do
@@ -282,7 +295,8 @@ lemma exp_enrich {f : Prob α} {g : α → Prob β} {u : β → ℝ} :
     (f >>= g).exp u = (f >>= (λ x ↦ Prod.mk x <$> g x)).exp (λ y ↦ u y.2) := by
   simp only [exp_bind, exp_map]; apply exp_congr; intro x _; apply exp_congr; intro y _; rfl
 lemma pr_enrich {f : Prob α} {g : α → Prob β} {p : β → Prop} :
-    (f >>= g).pr p = (f >>= (λ x ↦ Prod.mk x <$> g x)).pr (λ y ↦ p y.2) := by simp only [pr_bind, pr_map]
+    (f >>= g).pr p = (f >>= (λ x ↦ Prod.mk x <$> g x)).pr (λ y ↦ p y.2) := by
+  simp only [pr_bind, pr_map]
 lemma cexp_enrich {f : Prob α} {g : α → Prob β} {u : β → ℝ} {q : β → Prop} :
     (f >>= g).cexp u q = (f >>= (λ x ↦ Prod.mk x <$> g x)).cexp (λ y ↦ u y.2) (λ y ↦ q y.2) := by
   rw [cexp, cexp, exp_enrich, pr_enrich]

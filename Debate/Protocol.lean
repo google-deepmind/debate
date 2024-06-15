@@ -30,7 +30,7 @@ abbrev AllIds := @univ OracleId
 
 -- Next, we give type signatures for Alice and Bob, and the protocol that connects them.
 -- See Figure 1 in the paper for the corresponding prose description.  We differ from Figure 1
--- in that we treat steps (2b,2c,2d) as fixed parts of the protocol, rather than moves by the agents.
+-- in that we treat steps (2b,2c,2d) as fixed parts of the protocol, rather than agent moves.
 
 /-- The state of a debate.  Either
     1. An uninterrupted Vector Bool n trace, or
@@ -38,7 +38,7 @@ abbrev AllIds := @univ OracleId
 def State (n : ℕ) := Except Bool (Vector Bool n)
 
 /-- Alice takes the transcript so far and estimates a probability that the next step is 1.
-    In the game, Alice's goal is to produce output 1.  An honest Alice will try to mimic Oracle.fold. -/
+    Alice's goal is to produce output 1.  An honest Alice will try to mimic Oracle.fold. -/
 def Alice' (o : OracleId) := (n : ℕ) → Vector Bool n → Comp {o} ℝ
 
 /-- Alice using the normal `AliceId` -/
@@ -114,8 +114,8 @@ def debate (alice : Alice) (bob : Bob) (vera : Vera) (t : ℕ) : Comp AllIds Boo
 -- Correct result, and Details.lean for the proof.
 
 /-- The debate protocol is correct if, for all k-Lipschitz oracles o
-    1. Whenever Pr(o.final) ≥ 2/3, Honest Alice beats arbitrary Bob (Eve) with probability w > 1/2
-    2. Whenever Pr(o.final) ≤ 1/3, Honest Bob beats arbitrary Alice (Eve) with probability w > 1/2 -/
+    1. Whenever Pr(o.final) ≥ 2/3, Honest Alice beats any Bob (Eve) with probability w > 1/2
+    2. Whenever Pr(o.final) ≤ 1/3, Honest Bob beats any Alice (Eve) with probability w > 1/2 -/
 structure Correct (w k : ℝ) (t : ℕ) (alice : Alice) (bob : Bob) (vera : Vera) : Prop where
   /-- Success is more likely than failure -/
   half_lt_w : 1/2 < w

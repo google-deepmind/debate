@@ -32,7 +32,8 @@ def PMF.toProb (f : PMF α) (finite : f.support.Finite) : Prob α where
     apply Finsupp.ofSupportFinite (fun x ↦ ENNReal.toReal (f x))
     rcases finite.exists_finset with ⟨s,h⟩
     apply Set.Finite.ofFinset s
-    intro x; simp only [h, PMF.mem_support_iff, ne_eq, Function.mem_support, ENNReal.toReal_eq_zero_iff,
+    intro x
+    simp only [h, PMF.mem_support_iff, ne_eq, Function.mem_support, ENNReal.toReal_eq_zero_iff,
       PMF.apply_ne_top, or_false]
   prob_nonneg := by intro x; simp only [Finsupp.ofSupportFinite_coe]; apply ENNReal.toReal_nonneg
   total := by
@@ -50,8 +51,8 @@ def PMF.toProb (f : PMF α) (finite : f.support.Finite) : Prob α where
       · simp only [Finsupp.sum, Finsupp.ofSupportFinite_coe]
         rw [@Finset.sum_subset _ _ _ s]
         · simp only [ge_iff_le, gt_iff_lt, not_lt, mem_Ioo] at total
-          simp only [Finset.sum_toReal (λ _ ↦ PMF.apply_ne_top _ _), Real.dist_eq, abs_le, le_sub_iff_add_le,
-            sub_le_iff_le_add, add_comm _ (1:ℝ)]
+          simp only [Finset.sum_toReal (λ _ ↦ PMF.apply_ne_top _ _), Real.dist_eq, abs_le,
+            le_sub_iff_add_le, sub_le_iff_le_add, add_comm _ (1:ℝ)]
           constructor
           · rw [←ENNReal.ofReal_le_iff_le_toReal]
             · rw [←sub_eq_add_neg, ENNReal.ofReal_sub, ENNReal.ofReal_one]; exact le_of_lt total.1
@@ -63,10 +64,11 @@ def PMF.toProb (f : PMF α) (finite : f.support.Finite) : Prob α where
               · norm_num
               · exact le_of_lt ep
         · intro x
-          simp only [Finsupp.mem_support_iff, Finsupp.ofSupportFinite_coe, h, ENNReal.toReal_ne_zero,
-            PMF.mem_support_iff]
+          simp only [Finsupp.mem_support_iff, Finsupp.ofSupportFinite_coe, h,
+            ENNReal.toReal_ne_zero, PMF.mem_support_iff]
           apply And.left
-        · intro x _ m; simpa only [Finsupp.mem_support_iff, Finsupp.ofSupportFinite_coe, ne_eq, not_not] using m
+        · intro x _ m
+          simpa only [Finsupp.mem_support_iff, Finsupp.ofSupportFinite_coe, ne_eq, not_not] using m
       · intro x _ m; simpa only [h x, PMF.mem_support_iff, not_not] using m
 
 /-- `Prob.toPmf` has the expected coe -/
@@ -111,27 +113,34 @@ lemma Prob.pure_toPmf (x : α) : (pure x : Prob α).toPmf = pure x := by
   split_ifs; simp only [ENNReal.ofReal_one]; simp only [ENNReal.ofReal_zero]
 
 /-- `Prob.toPmf` commutes with bind -/
-lemma Prob.bind_toPmf (f : Prob α) (g : α → Prob β) : (f >>= g).toPmf = f.toPmf >>= (fun x ↦ (g x).toPmf) := by
+lemma Prob.bind_toPmf (f : Prob α) (g : α → Prob β) :
+    (f >>= g).toPmf = f.toPmf >>= (fun x ↦ (g x).toPmf) := by
   ext y
   simp only [Prob.toPmf_coe, PMF.bind_apply', Prob.prob_bind, Prob.exp, Finsupp.sum,
-    ←Finset.sum_ofReal fun _ ↦ mul_nonneg (prob_nonneg _) (prob_nonneg _), ←ENNReal.ofReal_mul (prob_nonneg _)]
-  refine (HasSum.tsum_eq ?_).symm; apply Finset.hasSum_sum
-  intro _ m; simp only [Finsupp.mem_support_iff, not_not] at m; simp only [m, zero_mul, ENNReal.ofReal_zero]
+    ←Finset.sum_ofReal fun _ ↦ mul_nonneg (prob_nonneg _) (prob_nonneg _),
+    ←ENNReal.ofReal_mul (prob_nonneg _)]
+  refine (HasSum.tsum_eq ?_).symm
+  apply Finset.hasSum_sum
+  intro _ m
+  simp only [Finsupp.mem_support_iff, not_not] at m
+  simp only [m, zero_mul, ENNReal.ofReal_zero]
 
 /-- `Prob.exp` is tsum over `toPmf` -/
-lemma Prob.tsum_toPmf_eq_exp (f : Prob α) (u : α → ℝ) : ∑' x, (f.toPmf x).toReal * u x = f.exp u := by
+lemma Prob.tsum_toPmf_eq_exp (f : Prob α) (u : α → ℝ) :
+    ∑' x, (f.toPmf x).toReal * u x = f.exp u := by
   apply HasSum.tsum_eq; simp only [Prob.toPmf_coe, ENNReal.toReal_ofReal (prob_nonneg _)]
   apply Finset.hasSum_sum; intro _ m
   simp only [Finsupp.mem_support_iff, ne_eq, not_not] at m; simp only [m, zero_mul]
 
 /-- Everything is integrable over `PMF`s with finite support -/
-lemma PMF.integrable_of_support_finite (f : PMF α) (u : α → ℝ) (hf : f.support.Finite) [MeasurableSpace α]
-    [MeasurableSingletonClass α] :
+lemma PMF.integrable_of_support_finite (f : PMF α) (u : α → ℝ) (hf : f.support.Finite)
+    [MeasurableSpace α] [MeasurableSingletonClass α] :
     MeasureTheory.Integrable u f.toMeasure := by
   rw [←PMF.restrict_toMeasure_support, ←MeasureTheory.IntegrableOn]
   have e : f.support = ⋃ (x : α) (_ : x ∈ hf.toFinset), {x} := by
-    ext x; simp only [mem_support_iff, ne_eq, Finite.mem_toFinset, mem_iUnion, mem_singleton_iff, exists_prop,
-      exists_eq_right']
+    ext x
+    simp only [mem_support_iff, ne_eq, Finite.mem_toFinset, mem_iUnion, mem_singleton_iff,
+      exists_prop, exists_eq_right']
   rw [e, MeasureTheory.integrableOn_finset_iUnion]
   intro _ _
   rw [MeasureTheory.integrableOn_singleton_iff,  PMF.toMeasure_apply_singleton]
@@ -139,12 +148,12 @@ lemma PMF.integrable_of_support_finite (f : PMF α) (u : α → ℝ) (hf : f.sup
   · apply MeasurableSet.singleton
 
 /-- Everything is integrable over `toPmf`, since it has finite support -/
-lemma Prob.integrable_toPmf (f : Prob α) (u : α → ℝ) [MeasurableSpace α] [MeasurableSingletonClass α] :
-    MeasureTheory.Integrable u f.toPmf.toMeasure :=
+lemma Prob.integrable_toPmf (f : Prob α) (u : α → ℝ) [MeasurableSpace α]
+    [MeasurableSingletonClass α] : MeasureTheory.Integrable u f.toPmf.toMeasure :=
   PMF.integrable_of_support_finite _ _ f.toPmf_support_finite
 
 /-- `Prob.exp` is integration over `toPmf`, if `α` is nice -/
-lemma Prob.integral_toPmf_eq_exp (f : Prob α) (u : α → ℝ) [MeasurableSpace α] [MeasurableSingletonClass α] :
-    ∫ x, u x ∂(f.toPmf.toMeasure) = f.exp u := by
+lemma Prob.integral_toPmf_eq_exp (f : Prob α) (u : α → ℝ) [MeasurableSpace α]
+    [MeasurableSingletonClass α] : ∫ x, u x ∂(f.toPmf.toMeasure) = f.exp u := by
   simp_rw [←Prob.tsum_toPmf_eq_exp, ←smul_eq_mul]
   exact PMF.integral_eq_tsum _ _ (f.integrable_toPmf _)

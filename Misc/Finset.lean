@@ -12,9 +12,9 @@ noncomputable section
 
 variable {α β : Type}
 
-/-- We can swap one set for another in `Finset.sum` if the function is zero away from their intersection -/
-lemma Finset.sum_eq_sum_zero_off_inter {s0 s1 : Finset α} {g : α → ℝ} (h : ∀ x, x ∉ s0 ∨ x ∉ s1 → g x = 0) :
-    s0.sum g = s1.sum g := by
+/-- We can swap one set for another in `Finset.sum` if the function is zero off the intersection -/
+lemma Finset.sum_eq_sum_zero_off_inter {s0 s1 : Finset α} {g : α → ℝ}
+    (h : ∀ x, x ∉ s0 ∨ x ∉ s1 → g x = 0) : s0.sum g = s1.sum g := by
   have e0 : s0.sum g = (s0 ∪ s1).sum g := by
     apply Finset.sum_subset_zero_on_sdiff (Finset.subset_union_left _ _)
     · intro x m; apply h; left; rw [Finset.mem_sdiff] at m; exact m.2
@@ -25,7 +25,7 @@ lemma Finset.sum_eq_sum_zero_off_inter {s0 s1 : Finset α} {g : α → ℝ} (h :
     · simp only [Prod.mk.eta, implies_true, Prod.forall, forall_const]
   rw [e0, e1]
 
-/-- Bound one `Finset.sum` in terms of another on a different space, but injecting between the spaces -/
+/-- Bound one `Finset.sum` by another on a different space, but injecting between the spaces -/
 lemma Finset.sum_le_sum_of_map {s : Finset α} {t : Finset β} {u : α → ℝ} {v : β → ℝ} (i : α → β)
     (inj : ∀ x0 x1, u x0 ≠ 0 → u x1 ≠ 0 → i x0 = i x1 → x0 = x1)
     (le : ∀ x, u x ≠ 0 → u x ≤ v (i x))
@@ -45,7 +45,8 @@ lemma Finset.sum_le_sum_of_map {s : Finset α} {t : Finset β} {u : α → ℝ} 
   · rw [Finset.sum_image]
     · apply Finset.sum_le_sum; intro x m; simp only [mem_filter, s'] at m; exact le _ m.2
     · intro x m y n; simp only [mem_filter, s'] at m n; apply inj _ _ m.2 n.2
-  · apply Finset.sum_nonneg; intro y m; simp only [mem_sdiff, not_exists, not_and] at m; exact v0 _ m.1
+  · apply Finset.sum_nonneg; intro y m
+    simp only [mem_sdiff, not_exists, not_and] at m; exact v0 _ m.1
 
 /-- `ENNReal.ofReal` commutes with `Finset.sum` for nonnegative maps -/
 lemma Finset.sum_ofReal {s : Finset α} {f : α → ℝ} (f0 : ∀ x, 0 ≤ f x) :
