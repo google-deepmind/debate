@@ -604,11 +604,17 @@ Meh, let's get very lazy:
 
 /-- A valid set of parameters for the debate protocol -/
 structure Params (w d k : ℝ) (t : ℕ) where
+  /-- Vera's failure probability -/
   v : ℝ
+  /-- Alice's probability goal: Honest Alice's claimed probabilities are usually off by `≤ c` -/
   c : ℝ
+  /-- Vera's acceptance probability goal: Vera usually accepts if probabilities are off by `≤ s` -/
   s : ℝ
+  /-- Vera's rejection probability goal: Vera usually rejects if probabilities are off by `≥ b` -/
   b : ℝ
+  /-- Alice's and Bob's failure probability -/
   q : ℝ
+  /-- Basic inequalities -/
   k0 : 0 < k
   c0 : 0 < c := by positivity
   cs : c < s
@@ -619,7 +625,9 @@ structure Params (w d k : ℝ) (t : ℕ) where
   v1 : v ≤ 1
   qv : q ≤ v
   bw : k * b ≤ w
+  /-- Inequality sufficient for completeness -/
   complete : d ≤ (1-v) * (w - k * c - q * (t+1))
+  /-- Inequality sufficient for soundness -/
   sound : d ≤ (1-v) * (1 - q * (t+1)) * (w - k * b)
 
 /-- Completeness for any valid parameters -/
@@ -645,3 +653,32 @@ theorem soundness_p (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
   · apply add_le_add_right m
   · linarith [p.bw]
   · apply pow_nonneg; linarith [p.q1]
+
+/-- Default valid parameters (not tuned) -/
+def defaults (k : ℝ) (t : ℕ) (k0 : 0 < k) : Params (2/3) (3/5) k t where
+  v := 1/100
+  c := 1/(100*k)
+  s := 2/(100*k)
+  b := 5/(100*k)
+  q := 1/(100*(t+1))
+  k0 := k0
+  cs := by rw [div_lt_div_right]; norm_num; positivity
+  sb := by rw [div_lt_div_right]; norm_num; positivity
+  q1 := by
+    rw [div_le_one]; apply one_le_mul_of_one_le_of_one_le (by norm_num)
+    simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]; positivity
+  v1 := by norm_num
+  qv := by
+    rw [←div_div]; apply div_le_self (by norm_num)
+    simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]
+  bw := by
+    simp only [div_eq_mul_inv, mul_inv, ←mul_assoc, mul_comm _ k⁻¹, inv_mul_cancel (ne_of_gt k0)]
+    norm_num
+  complete := by
+    simp only [←mul_div_assoc, mul_one, mul_comm _ k, ←div_div, div_self (ne_of_gt k0)]
+    rw [mul_comm_div, div_self (Nat.cast_add_one_ne_zero t)]; norm_num
+  sound := by
+    simp only [←mul_div_assoc, mul_one, mul_comm _ k, ←div_div, div_self (ne_of_gt k0)]
+    rw [mul_comm k 5, mul_div_assoc, div_self (ne_of_gt k0), mul_comm_div,
+      div_self (Nat.cast_add_one_ne_zero t)]
+    norm_num
