@@ -12,9 +12,6 @@ import Misc.If
 See `Correct.lean` for the summary.
 -/
 
--- Work around https://github.com/leanprover/lean4/issues/2220
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y) -- See issue lean4#2220
-
 open Classical
 open Prob
 open Option (some none)
@@ -290,7 +287,7 @@ We prove all intermediate theorems with flexible constants, then pick at the end
 
 /-- Alice produces (p,y) with p close to o.probs y with good probability -/
 lemma alices_close (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) (n : ℕ) :
-    (1 - q)^n ≤ (alices o (alice e q) n).pr (fun (p,y) ↦ close p (o.probs y) e) := by
+    (1 - q : ℝ)^n ≤ (alices o (alice e q) n).pr (fun (p,y) ↦ close p (o.probs y) e) := by
   induction' n with n h
   · simp only [Nat.zero_eq, pow_zero, alices, close_nil, pr_pure, if_true, le_refl]
   · simp only [pow_succ, alices, Oracle.probs, pr_bind, pr_pure, Vector.tail_cons, close_cons,
@@ -305,7 +302,7 @@ lemma alices_close (o : Oracle) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) (n : �
 /-- Alice produces (p,y) with p close and y true with good probability, since if we condition on
     Alice being close she does as least as well as a close oracle. -/
 lemma alices_success (o : Oracle) (L : o.lipschitz t k) (e0 : 0 < e) (q0 : 0 < q) (q1 : q ≤ 1) :
-    (o.final t).prob true - k * e - ((1:ℝ) - (1 - q)^(t+1)) ≤
+    (o.final t).prob true - k * e - ((1:ℝ) - (1 - q : ℝ)^(t+1)) ≤
       (alices o (alice e q) (t+1)).pr (fun (p,y) => close p (o.probs y) e ∧ y.head) := by
   trans (snaps o (alice e q) e (t+1)).pr (fun (_,y) => y.head) - (1 - (1 - q)^(t+1))
   · apply sub_le_sub_right; trans ((snap o (alice e q) e).final t).prob true

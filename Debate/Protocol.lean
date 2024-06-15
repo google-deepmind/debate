@@ -8,9 +8,6 @@ import Prob.Estimate
 The stochastic oracle doubly-efficient debate protocol
 -/
 
--- Work around https://github.com/leanprover/lean4/issues/2220
-local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y) -- See issue lean4#2220
-
 open Classical
 open Comp
 open Prob
