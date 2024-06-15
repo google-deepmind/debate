@@ -111,11 +111,6 @@ theorem bob_debate_cost (o : Oracle) (alice : Alice) (vera : Vera) (t : ℕ):
   · refine exp_le_of_forall_le (fun y m ↦ ?_)
     induction y; repeat simp only [Comp.cost_pure, le_refl]
 
-/-- `Nat.ceil` adds at most one -/
-lemma Nat.ceil_le_add_one {x : ℝ} (x0 : 0 ≤ x) : ⌈x⌉₊ ≤ x + 1 := by
-  rw [natCast_ceil_eq_intCast_ceil x0]
-  exact (Int.ceil_lt_add_one x).le
-
 /-- Alice makes `O(k^2 t log t)` queries with default parameters -/
 theorem alice_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (bob : Bob) (vera : Vera) :
     let p := defaults k t k0
@@ -129,7 +124,7 @@ theorem alice_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (bob : Bob) (vera : Vera) :
   simp only [mul_pow, mul_div_assoc (Real.log _), mul_div_right_comm, mul_right_comm _ _ (2 : ℝ)]
   norm_num
   simp only [mul_comm (Real.log _)]
-  refine le_trans (Nat.ceil_le_add_one ?_) (le_refl _)
+  refine le_trans (Nat.ceil_lt_add_one ?_).le (le_refl _)
   exact mul_nonneg (by positivity) (Real.log_nonneg (by linarith))
 
 /-- Bob makes `O(k^2 t log t)` queries with default parameters -/
@@ -146,7 +141,7 @@ theorem bob_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (alice : Alice) (vera : Vera) 
   simp only [mul_pow, mul_div_assoc (Real.log _), mul_div_right_comm, mul_right_comm _ _ (2 : ℝ)]
   norm_num
   simp only [hd, mul_comm (Real.log _)]
-  refine le_trans (Nat.ceil_le_add_one ?_) (le_refl _)
+  refine le_trans (Nat.ceil_lt_add_one ?_).le (le_refl _)
   exact mul_nonneg (by positivity) (Real.log_nonneg (by linarith))
 
 /-!
@@ -232,7 +227,7 @@ theorem vera_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (alice : Alice) (bob : Bob) :
   refine le_trans (vera_debate_cost _ _ _ _) ?_
   simp only [defaults, samples, ← Real.log_inv]
   field_simp
-  refine le_trans (Nat.ceil_le_add_one (by positivity)) ?_
+  refine le_trans (Nat.ceil_lt_add_one (by positivity)).le ?_
   simp only [mul_pow, mul_div_assoc (Real.log _), mul_div_right_comm, mul_right_comm _ _ (2 : ℝ)]
   norm_num [← mul_assoc]
   refine mul_le_mul_of_nonneg_right ?_ (by positivity)
