@@ -72,7 +72,8 @@ instance : LawfulMonad (Comp s) := LawfulMonad.mk'
   simp only [cost, run, exp_pure, Nat.cast_zero]
 
 /-- `pure'` is free -/
-@[simp] lemma cost_pure' (x : α) (o : I → Oracle) (i : I) : (Comp.pure' x : Comp s α).cost o i = 0 := by
+@[simp] lemma cost_pure' (x : α) (o : I → Oracle) (i : I) :
+    (Comp.pure' x : Comp s α).cost o i = 0 := by
   simp only [cost, run, exp_pure, Nat.cast_zero]
 
 /-- `sample'` cost's is the expected follow-on cost -/
@@ -84,7 +85,8 @@ instance : LawfulMonad (Comp s) := LawfulMonad.mk'
 @[simp] lemma cost_query' {i : I} (m : i ∈ s) {n : ℕ} (y : Vector Bool n) (f0 f1 : Comp s α)
     (o : I → Oracle) (j : I) :
     (Comp.query' i m n y f0 f1).cost o j =
-      (if j = i then 1 else 0) + (o i _ y).exp (fun x ↦ if x then f0.cost o j else f1.cost o j) := by
+      (if j = i then 1 else 0) +
+      (o i _ y).exp (fun x ↦ if x then f0.cost o j else f1.cost o j) := by
   simp only [cost, run, exp_bind, Nat.cast_zero]
   rw [←exp_const_add]; apply exp_congr; intro x _; induction x;
   repeat simp only [ite_false, ite_true, exp_bind, exp_pure, Pi.add_apply, Nat.cast_add,
@@ -101,7 +103,7 @@ lemma cost_of_not_mem (f : Comp s α) (o : I → Oracle) {i : I} (is : i ∉ s) 
   · simp only [cost_sample, h, exp_const]
   · simp only [cost_query', h0, h1, ite_self, exp_const, add_zero]
     by_cases ij : i = j
-    · simp only [ij] at is; simp (config := {decide := true}) only [js] at is
+    · simp only [ij] at is; simp only [js, not_true_eq_false] at is
     · simp only [ij, if_false]
 
 /-- Expanding `query'.run` -/
@@ -307,8 +309,8 @@ macro "not_mem" : tactic =>
 
 /-- Show `s ⊆ t` via `simp` -/
 macro "subset" : tactic =>
-  `(tactic| simp (config := {decide := true}) only [Set.mem_singleton_iff, Set.singleton_subset_iff, Set.mem_insert_iff,
-    or_false])
+  `(tactic| simp only [Set.mem_singleton_iff, Set.singleton_subset_iff, Set.mem_insert_iff,
+    or_false, false_or])
 
 /-- Show a cost is zero via `i : I` not being in `s` -/
 macro "zero_cost" : tactic =>

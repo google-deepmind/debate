@@ -38,8 +38,12 @@ def defaults (k : ℝ) (t : ℕ) (k0 : 0 < k) : Params (2/3) (3/5) k t where
     rw [div_le_one]; apply one_le_mul_of_one_le_of_one_le (by norm_num)
     simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]; positivity
   v1 := by norm_num
-  qv := by rw [←div_div]; apply div_le_self (by norm_num); simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]
-  bw := by simp only [div_eq_mul_inv, mul_inv, ←mul_assoc, mul_comm _ k⁻¹, inv_mul_cancel (ne_of_gt k0)]; norm_num
+  qv := by
+    rw [←div_div]; apply div_le_self (by norm_num)
+    simp only [le_add_iff_nonneg_left, Nat.cast_nonneg]
+  bw := by
+    simp only [div_eq_mul_inv, mul_inv, ←mul_assoc, mul_comm _ k⁻¹, inv_mul_cancel (ne_of_gt k0)]
+    norm_num
   complete := by
     simp only [←mul_div_assoc, mul_one, mul_comm _ k, ←div_div, div_self (ne_of_gt k0)]
     rw [mul_comm_div, div_self (Nat.cast_add_one_ne_zero t)]; norm_num

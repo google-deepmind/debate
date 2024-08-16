@@ -54,7 +54,7 @@ def query (i : I) {n : ℕ} (y : Vector Bool n) : Comp {i} Bool :=
   Comp.query' i (mem_singleton _) n y (pure true) (pure false)
 
 /-- The value and query counts of a `Comp s`, once we supply oracles -/
-@[pp_dot] def run (f : Comp s α) (o : I → Oracle) : Prob (α × (I → ℕ)) := match f with
+def run (f : Comp s α) (o : I → Oracle) : Prob (α × (I → ℕ)) := match f with
   | .pure' x => pure (x, fun _ => 0)
   | .sample' f g => f >>= fun x ↦ (g x).run o
   | .query' i _ n y f0 f1 => do
@@ -63,31 +63,31 @@ def query (i : I) {n : ℕ} (y : Vector Bool n) : Comp {i} Bool :=
     return (z, c + fun j => if j = i then 1 else 0)
 
 /-- The value of a `Comp s` -/
-@[pp_dot] def prob (f : Comp s α) (o : I → Oracle) : Prob α :=
+def prob (f : Comp s α) (o : I → Oracle) : Prob α :=
   Prod.fst <$> f.run o
 
 /-- The value of a `Comp s` when all oracles are the same -/
-@[pp_dot, simp] def prob' (f : Comp s α) (o : Oracle) : Prob α :=
+@[simp] def prob' (f : Comp s α) (o : Oracle) : Prob α :=
   f.prob fun _ ↦ o
 
 /-- The expected query cost of a `Comp α`.
     There is a design decision here to make the theory about expected cost.  My guess is that
     will make the downstream theory slightly easier. -/
-@[pp_dot] def cost (f : Comp s α) (o : I → Oracle) (i : I) : ℝ :=
+def cost (f : Comp s α) (o : I → Oracle) (i : I) : ℝ :=
   (f.run o).exp fun (_,c) ↦ c i
 
 /-- The expected query cost of a `Comp α` when all oracles are the same. -/
-@[pp_dot] def cost' (f : Comp s α) (o : Oracle) : I → ℝ :=
+def cost' (f : Comp s α) (o : Oracle) : I → ℝ :=
   f.cost fun _ ↦ o
 
 /-- Allow more oracles in a computation -/
-@[pp_dot] def allow (f : Comp s α) (st : s ⊆ t) : Comp t α := match f with
+def allow (f : Comp s α) (st : s ⊆ t) : Comp t α := match f with
   | .pure' x => pure x
   | .sample' f g => f >>= fun x ↦ (g x).allow st
   | .query' i m n y f0 f1 => .query' i (st m) n y (f0.allow st) (f1.allow st)
 
 /-- Allow all oracles in a computation -/
-@[pp_dot] def allow_all (f : Comp s α) : Comp (@univ I) α :=
+def allow_all (f : Comp s α) : Comp (@univ I) α :=
   f.allow (subset_univ s)
 
 end Comp
