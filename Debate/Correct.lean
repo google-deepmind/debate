@@ -27,8 +27,8 @@ theorem soundness (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
 
 /-- The debate protocol is correct with probability 3/5, using the default parameters -/
 theorem correctness (k : ℝ) (k0 : 0 < k) (t : ℕ) :
-    let p := defaults k t k0
+    let p := Params.defaults k t k0
     Correct (3/5) k t (alice p.c p.q) (bob p.s p.b p.q) (vera p.c p.s p.v) where
   half_lt_w := by norm_num
-  complete o eve L m := completeness o L eve (defaults k t k0) m
-  sound o eve L m := soundness o L eve (defaults k t k0) m
+  complete o eve L m := completeness o L eve (.defaults k t k0) m
+  sound o eve L m := soundness o L eve (.defaults k t k0) m

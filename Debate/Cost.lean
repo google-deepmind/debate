@@ -113,12 +113,12 @@ theorem bob_debate_cost (o : Oracle) (alice : Alice) (vera : Vera) (t : ℕ):
 
 /-- Alice makes `O(k^2 t log t)` queries with default parameters -/
 theorem alice_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (bob : Bob) (vera : Vera) :
-    let p := defaults k t k0
+    let p := Params.defaults k t k0
     (debate (alice p.c p.q) bob vera t).cost' o AliceId ≤
       (t+1) * (5000 * k^2 * Real.log (200 * (t+1)) + 1) := by
   refine le_trans (alice_debate_cost _ _ _ _) ?_
   refine mul_le_mul_of_nonneg_left ?_ (by positivity)
-  simp only [defaults, samples, ← Real.log_inv]
+  simp only [Params.defaults, samples, ← Real.log_inv]
   generalize hn : (t+1 : ℝ) = n
   field_simp
   simp only [mul_pow, mul_div_assoc (Real.log _), mul_div_right_comm, mul_right_comm _ _ (2 : ℝ)]
@@ -129,13 +129,13 @@ theorem alice_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (bob : Bob) (vera : Vera) :
 
 /-- Bob makes `O(k^2 t log t)` queries with default parameters -/
 theorem bob_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (alice : Alice) (vera : Vera) :
-    let p := defaults k t k0
+    let p := Params.defaults k t k0
     (debate alice (bob p.s p.b p.q) vera t).cost' o BobId ≤
       (t+1) * (20000 / 9 * k^2 * Real.log (200 * (t+1)) + 1) := by
   generalize hd : (20000 / 9 : ℝ) = d
   refine le_trans (bob_debate_cost _ _ _ _) ?_
   refine mul_le_mul_of_nonneg_left ?_ (by positivity)
-  simp only [defaults, samples, ← Real.log_inv]
+  simp only [Params.defaults, samples, ← Real.log_inv]
   generalize hn : (t+1 : ℝ) = n
   field_simp
   simp only [mul_pow, mul_div_assoc (Real.log _), mul_div_right_comm, mul_right_comm _ _ (2 : ℝ)]
@@ -212,7 +212,7 @@ theorem vera_debate_cost (o : Oracle) (alice : Alice) (bob : Bob) (t : ℕ):
     · simp only [Comp.cost_pure, Nat.cast_nonneg]
 
 /-- A calculation used in `vera_fast` -/
-lemma log_mul_le : Real.log 200 * 20000 ≤ 106000 := by
+lemma  log_200_mul_20000_le : Real.log 200 * 20000 ≤ 106000 := by
   rw [← le_div_iff (by norm_num), Real.log_le_iff_le_exp (by norm_num)]
   norm_num
   rw [← Real.exp_one_rpow, div_eq_mul_inv, Real.rpow_mul (by positivity),
@@ -222,13 +222,13 @@ lemma log_mul_le : Real.log 200 * 20000 ≤ 106000 := by
 
 /-- Vera makes `O(k^2)` queries with default parameters -/
 theorem vera_fast (k : ℝ) (k0 : 0 < k) (t : ℕ) (alice : Alice) (bob : Bob) :
-    let p := defaults k t k0
+    let p := Params.defaults k t k0
     (debate alice bob (vera p.c p.s p.v) t).cost' o VeraId ≤ 106000 * k^2 + 1 := by
   refine le_trans (vera_debate_cost _ _ _ _) ?_
-  simp only [defaults, samples, ← Real.log_inv]
+  simp only [Params.defaults, samples, ← Real.log_inv]
   field_simp
   refine le_trans (Nat.ceil_lt_add_one (by positivity)).le ?_
   simp only [mul_pow, mul_div_assoc (Real.log _), mul_div_right_comm, mul_right_comm _ _ (2 : ℝ)]
   norm_num [← mul_assoc]
   refine mul_le_mul_of_nonneg_right ?_ (by positivity)
-  exact log_mul_le
+  exact log_200_mul_20000_le

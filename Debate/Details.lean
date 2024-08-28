@@ -655,7 +655,7 @@ theorem soundness_p (o : Oracle) (L : o.lipschitz t k) (eve : Alice)
   · apply pow_nonneg; linarith [p.q1]
 
 /-- Default valid parameters (not tuned) -/
-def defaults (k : ℝ) (t : ℕ) (k0 : 0 < k) : Params (2/3) (3/5) k t where
+def Params.defaults (k : ℝ) (t : ℕ) (k0 : 0 < k) : Params (2/3) (3/5) k t where
   v := 1/100
   c := 1/(100*k)
   s := 2/(100*k)
