@@ -212,7 +212,7 @@ theorem vera_debate_cost (o : Oracle) (alice : Alice) (bob : Bob) (t : ℕ):
     · simp only [Comp.cost_pure, Nat.cast_nonneg]
 
 /-- A calculation used in `vera_fast` -/
-lemma  log_200_mul_20000_le : Real.log 200 * 20000 ≤ 106000 := by
+lemma log_200_mul_20000_le : Real.log 200 * 20000 ≤ 106000 := by
   rw [← le_div_iff (by norm_num), Real.log_le_iff_le_exp (by norm_num)]
   norm_num
   rw [← Real.exp_one_rpow, div_eq_mul_inv, Real.rpow_mul (by positivity),
