@@ -58,22 +58,21 @@ namespace Prob
 lemma zero_iff {f : Prob α} {x : α} : f.prob x = 0 ↔ x ∉ f.supp := Finsupp.not_mem_support_iff.symm
 lemma zero (f : Prob α) {x : α} (m : x ∉ f.supp) : f.prob x = 0 := Finsupp.not_mem_support_iff.mp m
 lemma mem_iff {f : Prob α} {x : α} : x ∈ f.supp ↔ f.prob x ≠ 0 := Finsupp.mem_support_iff
-lemma mem_iff_pos {f : Prob α} {x : α} : x ∈ f.supp ↔ 0 < f.prob x := by
-  rw [f.mem_iff]; constructor; intro e; exact e.symm.lt_of_le f.prob_nonneg; exact ne_of_gt
+lemma mem_iff_pos {f : Prob α} {x : α} : x ∈ f.supp ↔ 0 < f.prob x :=
+  (propext mem_iff) ▸ ⟨(·.symm.lt_of_le f.prob_nonneg), ne_of_gt⟩
 
 /-- Probs are equal if their probabilities are -/
 @[ext] lemma ext {f g : Prob α} (h : ∀ x, f.prob x = g.prob x) : f = g := by
-  induction' f with p _ _; induction' g with q _ _; simp only [mk.injEq]; ext x; apply h
+  induction' f; induction' g; congr; ext; apply h
 
 /-- Probs are equal iff their probabilities are -/
-lemma ext_iff {f g : Prob α} : f = g ↔ ∀ x, f.prob x = g.prob x := by
-  constructor; intro e x; simp only [e]; intro h; exact Prob.ext h
+lemma ext_iff {f g : Prob α} : f = g ↔ ∀ x, f.prob x = g.prob x := ⟨(· ▸ (λ _ ↦ rfl)), Prob.ext⟩
 
 /-- Prob is a monad -/
 instance : Monad Prob where
   pure := λ x ↦ {
     prob := Finsupp.single x 1
-    prob_nonneg := by intro x; simp only [Finsupp.single_apply]; split; norm_num; norm_num
+    prob_nonneg := by intro; rw [Finsupp.single_apply]; split <;> norm_num
     total := Finsupp.sum_single_index rfl
   }
   bind := λ f g ↦ by
@@ -89,6 +88,6 @@ instance : Monad Prob where
         simp only [e, Prob.total]
       · simp only [implies_true]
       · simp only [forall_const, implies_true]
-    exact { prob := prob, prob_nonneg := fun {_} => nonneg _, total := total }
+    exact { prob := prob, prob_nonneg := nonneg _, total := total }
 
 end Prob
