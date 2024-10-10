@@ -59,7 +59,7 @@ lemma zero_iff {f : Prob α} {x : α} : f.prob x = 0 ↔ x ∉ f.supp := Finsupp
 lemma zero (f : Prob α) {x : α} (m : x ∉ f.supp) : f.prob x = 0 := Finsupp.not_mem_support_iff.mp m
 lemma mem_iff {f : Prob α} {x : α} : x ∈ f.supp ↔ f.prob x ≠ 0 := Finsupp.mem_support_iff
 lemma mem_iff_pos {f : Prob α} {x : α} : x ∈ f.supp ↔ 0 < f.prob x :=
-    (propext mem_iff) ▸ ⟨(·.symm.lt_of_le f.prob_nonneg), ne_of_gt⟩
+  (propext mem_iff) ▸ ⟨(·.symm.lt_of_le f.prob_nonneg), ne_of_gt⟩
 
 /-- Probs are equal if their probabilities are -/
 @[ext] lemma ext {f g : Prob α} (h : ∀ x, f.prob x = g.prob x) : f = g := by
